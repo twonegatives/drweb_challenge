@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 
 	"github.com/pkg/errors"
 	"github.com/twonegatives/drweb_challenge/pkg/drweb"
@@ -15,11 +16,14 @@ type FileSystemStorage struct {
 }
 
 func (s *FileSystemStorage) filepath(filename string) string {
-	return path.Join(s.BasePath, filename)
+	return path.Join(s.BasePath, filename[0:2], filename[2:4], filename)
 }
 
 func (s *FileSystemStorage) Save(file *drweb.File) (string, error) {
 	path := s.filepath(file.GetFilename())
+	if err := os.MkdirAll(filepath.Dir(path), s.FileMode); err != nil {
+		return path, err
+	}
 	err := ioutil.WriteFile(path, file.Body, s.FileMode)
 	return path, err
 }

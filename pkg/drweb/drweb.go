@@ -1,6 +1,10 @@
 package drweb
 
-import "github.com/pkg/errors"
+import (
+	"fmt"
+
+	"github.com/pkg/errors"
+)
 
 type FileEncoder interface {
 	Encode(contents []byte) []byte
@@ -25,7 +29,7 @@ type File struct {
 }
 
 func (f *File) GetFilename() string {
-	return string(f.Encoder.Encode(f.Body)[:])
+	return fmt.Sprintf("%x", f.Encoder.Encode(f.Body))
 }
 
 func (f *File) Save() (string, error) {

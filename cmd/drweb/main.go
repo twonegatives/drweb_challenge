@@ -16,10 +16,10 @@ func main() {
 
 	storage := storages.FileSystemStorage{
 		BasePath: ".",
-		FileMode: 0600,
+		FileMode: 0700,
 	}
 
-	encoded := string(encoder.Encode(input)[:])
+	encoded := fmt.Sprintf("%x", encoder.Encode(input))
 
 	file := drweb.File{
 		Body:        input,
