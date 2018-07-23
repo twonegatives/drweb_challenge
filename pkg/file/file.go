@@ -1,17 +1,19 @@
 package file
 
 import (
-	"crypto/sha256"
 	"io/ioutil"
 	"os"
+
+	"github.com/twonegatives/drweb_challenge/pkg/drweb"
 )
 
 type File struct {
-	Body []byte
+	Body    []byte
+	Encoder drweb.FileEncoder
 }
 
 func (f *File) toHash() string {
-	hashbytes := sha256.Sum256(f.Body)
+	hashbytes := f.Encoder.Encode(f.Body)
 	return string(hashbytes[:])
 }
 
