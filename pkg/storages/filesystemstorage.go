@@ -1,4 +1,4 @@
-package filesystemstorage
+package storages
 
 import (
 	"io/ioutil"

@@ -1,4 +1,4 @@
-package sha256encoder
+package encoders
 
 import "crypto/sha256"
 

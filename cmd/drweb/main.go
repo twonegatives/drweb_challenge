@@ -4,24 +4,26 @@ import (
 	"fmt"
 
 	"github.com/twonegatives/drweb_challenge/pkg/drweb"
-	storages "github.com/twonegatives/drweb_challenge/pkg/filesystemstorage"
-	encoders "github.com/twonegatives/drweb_challenge/pkg/sha256encoder"
+	"github.com/twonegatives/drweb_challenge/pkg/encoders"
+	"github.com/twonegatives/drweb_challenge/pkg/filesavehooks"
+	"github.com/twonegatives/drweb_challenge/pkg/storages"
 )
 
 func main() {
 	input := []byte("This is an example file")
+	encoder := encoders.SHA256Encoder{}
+	hooks := filesavehooks.PrintlnHook{}
 
 	storage := storages.FileSystemStorage{
 		BasePath: ".",
 		FileMode: 0600,
 	}
 
-	encoder := encoders.SHA256Encoder{}
-
 	file := drweb.File{
-		Body:    input,
-		Encoder: &encoder,
-		Storage: &storage,
+		Body:        input,
+		Encoder:     &encoder,
+		Storage:     &storage,
+		HooksOnSave: &hooks,
 	}
 
 	_, err := file.Save()
