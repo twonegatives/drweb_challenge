@@ -5,26 +5,25 @@ type FileEncoder interface {
 }
 
 type Storage interface {
-	Save(contents []byte, filename string) (string, error)
-	Load(filename string) ([]byte, error)
+	Save(f *File) (string, error)
+	Load(filename string) (*File, error)
 	Delete(filename string) error
 }
 
 type FileSaveHooks interface {
-	Before(file *File) error
-	After(file *File, filename string, filepath string) error
+	Before(file *File, args ...interface{}) error
+	After(file *File, args ...interface{}) error
 }
 
 type File struct {
 	Body        []byte
-	Encoder     FileEncoder
 	Storage     Storage
 	HooksOnSave FileSaveHooks
+	Encoder     FileEncoder
 }
 
-func (f *File) encode() string {
-	hashbytes := f.Encoder.Encode(f.Body)
-	return string(hashbytes[:])
+func (f *File) GetFilename() string {
+	return string(f.Encoder.Encode(f.Body)[:])
 }
 
 func (f *File) Save() (string, error) {
@@ -32,14 +31,13 @@ func (f *File) Save() (string, error) {
 		return "", err
 	}
 
-	filename := f.encode()
-	filepath, err := f.Storage.Save(f.Body, filename)
+	filepath, err := f.Storage.Save(f)
 
 	if err != nil {
 		return "", err
 	}
 
-	if err := f.HooksOnSave.After(f, filename, filepath); err != nil {
+	if err := f.HooksOnSave.After(f); err != nil {
 		return "", err
 	}
 
