@@ -1,5 +1,7 @@
 package drweb
 
+import "github.com/pkg/errors"
+
 type FileEncoder interface {
 	Encode(contents []byte) []byte
 }
@@ -28,17 +30,17 @@ func (f *File) GetFilename() string {
 
 func (f *File) Save() (string, error) {
 	if err := f.HooksOnSave.Before(f); err != nil {
-		return "", err
+		return "", errors.Wrap(err, "beforeSave hook failed")
 	}
 
 	filepath, err := f.Storage.Save(f)
 
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "failed to save file")
 	}
 
 	if err := f.HooksOnSave.After(f); err != nil {
-		return "", err
+		return "", errors.Wrap(err, "afterSave hook failed")
 	}
 
 	return filepath, nil

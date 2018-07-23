@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/pkg/errors"
 	"github.com/twonegatives/drweb_challenge/pkg/drweb"
 )
 
@@ -27,7 +28,7 @@ func (s *FileSystemStorage) Load(filename string) (*drweb.File, error) {
 	contents, err := ioutil.ReadFile(s.filepath(filename))
 
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to load file")
 	}
 
 	return &drweb.File{Body: contents}, nil
