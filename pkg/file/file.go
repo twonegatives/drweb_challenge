@@ -8,8 +8,9 @@ import (
 )
 
 type File struct {
-	Body    []byte
-	Encoder drweb.FileEncoder
+	Body     []byte
+	Encoder  drweb.FileEncoder
+	Uploader drweb.FileUploader
 }
 
 func (f *File) toHash() string {
@@ -18,9 +19,9 @@ func (f *File) toHash() string {
 }
 
 func (f *File) Save() (string, error) {
-	hashstring := f.toHash()
-	err := ioutil.WriteFile(hashstring, f.Body, 0600)
-	return hashstring, err
+	filename := f.toHash()
+	// TODO: call to Sync should be ensured
+	return f.Uploader.Upload(f.Body, filename)
 }
 
 func LoadFile(hashstring string) (*File, error) {
