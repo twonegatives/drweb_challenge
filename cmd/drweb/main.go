@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	filepkg "github.com/twonegatives/drweb_challenge/pkg/file"
+	"github.com/twonegatives/drweb_challenge/pkg/drweb"
 	storages "github.com/twonegatives/drweb_challenge/pkg/filesystemstorage"
 	encoders "github.com/twonegatives/drweb_challenge/pkg/sha256encoder"
 )
@@ -18,7 +18,7 @@ func main() {
 
 	encoder := encoders.SHA256Encoder{}
 
-	file := filepkg.File{
+	file := drweb.File{
 		Body:    input,
 		Encoder: &encoder,
 		Storage: &storage,
