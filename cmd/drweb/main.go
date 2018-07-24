@@ -60,8 +60,8 @@ func main() {
 func withCallbacks(handler func(http.ResponseWriter, *http.Request), before drweb.Callback, after drweb.Callback) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		before.Invoke(w, r)
+		defer after.Invoke(w, r)
 		handler(w, r)
-		after.Invoke(w, r)
 	}
 }
 
