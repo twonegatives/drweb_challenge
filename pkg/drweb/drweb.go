@@ -26,10 +26,19 @@ type File struct {
 	Storage     Storage
 	HooksOnSave FileSaveHooks
 	Encoder     FileEncoder
+	filename    string
+}
+
+type SavedFile struct {
+	Filename string `json:"filename"`
+}
+
+func (f *File) setFilename() {
+	f.filename = fmt.Sprintf("%x", f.Encoder.Encode(f.Body))
 }
 
 func (f *File) GetFilename() string {
-	return fmt.Sprintf("%x", f.Encoder.Encode(f.Body))
+	return f.filename
 }
 
 func (f *File) Save() (string, error) {
@@ -37,6 +46,7 @@ func (f *File) Save() (string, error) {
 		return "", errors.Wrap(err, "beforeSave hook failed")
 	}
 
+	f.setFilename()
 	filepath, err := f.Storage.Save(f)
 
 	if err != nil {

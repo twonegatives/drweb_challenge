@@ -10,6 +10,7 @@ Golang code challange was to implement a filestore with http access:
 ## Firing up
 
 ```
+dep ensure
 go install ./...
 $GOPATH/bin/drweb
 ```

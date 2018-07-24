@@ -1,53 +1,85 @@
 package main
 
 import (
-	"fmt"
+	"bytes"
+	"encoding/json"
+	"io"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"time"
 
+	"github.com/gorilla/mux"
+	"github.com/twonegatives/drweb_challenge/pkg/config"
 	"github.com/twonegatives/drweb_challenge/pkg/drweb"
 	"github.com/twonegatives/drweb_challenge/pkg/encoders"
 	"github.com/twonegatives/drweb_challenge/pkg/filesavehooks"
 	"github.com/twonegatives/drweb_challenge/pkg/storages"
 )
 
-func main() {
-	input := []byte("This is an example file")
-	encoder := encoders.SHA256Encoder{}
-	hooks := filesavehooks.PrintlnHook{}
+var storage = storages.FileSystemStorage{
+	BasePath: ".",
+	FileMode: 0700,
+}
 
-	storage := storages.FileSystemStorage{
-		BasePath: ".",
-		FileMode: 0700,
+func main() {
+	cfg := config.NewConfig()
+
+	router := mux.NewRouter()
+	router.HandleFunc("/files", CreateFile).Methods("POST")
+	router.HandleFunc("/files/{hashstring}", RetrieveFile).Methods("GET")
+	router.HandleFunc("/files/{hashstring}", DeleteFile).Methods("DELETE")
+
+	srv := &http.Server{
+		Handler:      router,
+		Addr:         cfg.GetString("LISTEN"),
+		WriteTimeout: cfg.GetDuration("WRITE_TIMOUT") * time.Second,
+		ReadTimeout:  cfg.GetDuration("READ_TIMEOUT") * time.Second,
 	}
 
-	encoded := fmt.Sprintf("%x", encoder.Encode(input))
+	log.Fatal(srv.ListenAndServe())
+}
 
+func CreateFile(w http.ResponseWriter, r *http.Request) {
+	contents, _ := ioutil.ReadAll(r.Body)
 	file := drweb.File{
-		Body:        input,
+		Body:        contents,
 		Storage:     &storage,
-		HooksOnSave: &hooks,
-		Encoder:     &encoder,
+		HooksOnSave: &filesavehooks.PrintlnHook{},
+		Encoder:     &encoders.SHA256Encoder{},
 	}
 
 	_, err := file.Save()
 
 	if err != nil {
-		panic(fmt.Sprintf("could not save the file: %s", err))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	loadedBack, err := storage.Load(encoded)
+	saved := drweb.SavedFile{
+		Filename: file.GetFilename(),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(saved)
+}
+
+func RetrieveFile(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	file, err := storage.Load(vars["hashstring"])
 
 	if err != nil {
-		panic(fmt.Sprintf("could not load the file: %s", err))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	fmt.Println("saved and loaded back successfully")
-	fmt.Println(string(loadedBack.Body))
+	r := bytes.NewReader(file.Body)
+	io.Copy(w, r)
+}
 
-	err = storage.Delete(encoded)
+func DeleteFile(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
 
-	if err != nil {
-		panic(fmt.Sprintf("could not delete the file: %s", err))
+	if err := storage.Delete(vars["hashstring"]); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-
-	fmt.Println("deleted aswell")
 }
