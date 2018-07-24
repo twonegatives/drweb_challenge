@@ -22,18 +22,18 @@ func (s *FileSystemStorage) filepath(filename string) string {
 func (s *FileSystemStorage) Save(file *drweb.File) (string, error) {
 	path := s.filepath(file.Filename)
 	if err := os.MkdirAll(filepath.Dir(path), s.FileMode); err != nil {
-		return path, err
+		return path, errors.Wrap(err, "failed to create nested folders")
 	}
 
 	output, err := os.Create(path)
 	defer output.Close()
 	if err != nil {
-		return path, err
+		return path, errors.Wrap(err, "failed to create file")
 	}
 
 	_, err = io.Copy(output, file.Body)
 
-	return path, err
+	return path, errors.Wrap(err, "failed to write to file")
 }
 
 func (s *FileSystemStorage) Load(filename string) (*drweb.File, error) {

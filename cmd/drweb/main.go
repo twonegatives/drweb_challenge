@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/twonegatives/drweb_challenge/pkg/callbacks"
 	"github.com/twonegatives/drweb_challenge/pkg/config"
 	"github.com/twonegatives/drweb_challenge/pkg/drweb"
 	"github.com/twonegatives/drweb_challenge/pkg/encoders"
-	"github.com/twonegatives/drweb_challenge/pkg/filesavehooks"
 	"github.com/twonegatives/drweb_challenge/pkg/storages"
 )
 
@@ -24,9 +24,11 @@ func main() {
 	cfg := config.NewConfig()
 
 	router := mux.NewRouter()
-	router.HandleFunc("/files", CreateFile).Methods("POST")
-	router.HandleFunc("/files/{hashstring}", RetrieveFile).Methods("GET")
-	router.HandleFunc("/files/{hashstring}", DeleteFile).Methods("DELETE")
+	startSaveCbk := callbacks.LogCallback{Content: "Started to save a file"}
+	finishSaveCbk := callbacks.LogCallback{Content: "Finished file saving process"}
+	router.HandleFunc("/files", withCallbacks(createFile, &startSaveCbk, &finishSaveCbk)).Methods("POST")
+	router.HandleFunc("/files/{hashstring}", retrieveFile).Methods("GET")
+	router.HandleFunc("/files/{hashstring}", deleteFile).Methods("DELETE")
 
 	srv := &http.Server{
 		Handler:      router,
@@ -38,14 +40,22 @@ func main() {
 	log.Fatal(srv.ListenAndServe())
 }
 
-func CreateFile(w http.ResponseWriter, r *http.Request) {
-	file, err := drweb.NewFile(r.Body, &storage, &filesavehooks.PrintlnHook{}, &encoders.SHA256Encoder{})
+func withCallbacks(handler func(http.ResponseWriter, *http.Request), before drweb.Callback, after drweb.Callback) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		before.Invoke(w, r)
+		handler(w, r)
+		after.Invoke(w, r)
+	}
+}
+
+func createFile(w http.ResponseWriter, r *http.Request) {
+	file, err := drweb.NewFile(r.Body, &storage, &encoders.SHA256Encoder{})
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	_, err = file.Save()
+	_, err = storage.Save(file)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -56,7 +66,7 @@ func CreateFile(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(file)
 }
 
-func RetrieveFile(w http.ResponseWriter, req *http.Request) {
+func retrieveFile(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	file, err := storage.Load(vars["hashstring"])
 
@@ -67,7 +77,7 @@ func RetrieveFile(w http.ResponseWriter, req *http.Request) {
 	io.Copy(w, file.Body)
 }
 
-func DeleteFile(w http.ResponseWriter, r *http.Request) {
+func deleteFile(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
 	if err := storage.Delete(vars["hashstring"]); err != nil {
