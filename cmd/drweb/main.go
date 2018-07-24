@@ -68,13 +68,16 @@ func createFile(w http.ResponseWriter, r *http.Request) {
 
 func retrieveFile(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
-	file, err := storage.Load(vars["hashstring"])
+	filename := vars["hashstring"]
+	file, err := storage.Load(filename)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	io.Copy(w, file.Body)
+	if _, err := io.Copy(w, file.Body); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 func deleteFile(w http.ResponseWriter, r *http.Request) {
