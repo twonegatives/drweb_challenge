@@ -1,7 +1,7 @@
 package storages
 
 import (
-	"io/ioutil"
+	"io"
 	"os"
 	"path"
 	"path/filepath"
@@ -20,22 +20,30 @@ func (s *FileSystemStorage) filepath(filename string) string {
 }
 
 func (s *FileSystemStorage) Save(file *drweb.File) (string, error) {
-	path := s.filepath(file.GetFilename())
+	path := s.filepath(file.Filename)
 	if err := os.MkdirAll(filepath.Dir(path), s.FileMode); err != nil {
 		return path, err
 	}
-	err := ioutil.WriteFile(path, file.Body, s.FileMode)
+
+	output, err := os.Create(path)
+	defer output.Close()
+	if err != nil {
+		return path, err
+	}
+
+	_, err = io.Copy(output, file.Body)
+
 	return path, err
 }
 
 func (s *FileSystemStorage) Load(filename string) (*drweb.File, error) {
-	contents, err := ioutil.ReadFile(s.filepath(filename))
+	reader, err := os.Open(filename)
 
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to load file")
 	}
 
-	return &drweb.File{Body: contents}, nil
+	return &drweb.File{Body: reader}, nil
 }
 
 func (s *FileSystemStorage) Delete(filename string) error {

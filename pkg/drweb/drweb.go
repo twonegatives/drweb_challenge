@@ -2,12 +2,14 @@ package drweb
 
 import (
 	"fmt"
+	"io"
+	"io/ioutil"
 
 	"github.com/pkg/errors"
 )
 
-type FileEncoder interface {
-	Encode(contents []byte) []byte
+type Encoder interface {
+	Encode(input []byte) []byte
 }
 
 type Storage interface {
@@ -22,23 +24,23 @@ type FileSaveHooks interface {
 }
 
 type File struct {
-	Body        []byte
+	Body        io.Reader
 	Storage     Storage
 	HooksOnSave FileSaveHooks
-	Encoder     FileEncoder
-	filename    string
+	Filename    string `json:"filename"`
 }
 
-type SavedFile struct {
-	Filename string `json:"filename"`
-}
+func NewFile(body io.Reader, storage Storage, hooks FileSaveHooks, encoder Encoder) *File {
+	file := File{
+		Body:        body,
+		Storage:     storage,
+		HooksOnSave: hooks,
+	}
 
-func (f *File) setFilename() {
-	f.filename = fmt.Sprintf("%x", f.Encoder.Encode(f.Body))
-}
+	data, _ := ioutil.ReadAll(file.Body)
+	file.Filename = fmt.Sprintf("%x", encoder.Encode(data))
 
-func (f *File) GetFilename() string {
-	return f.filename
+	return &file
 }
 
 func (f *File) Save() (string, error) {
@@ -46,7 +48,6 @@ func (f *File) Save() (string, error) {
 		return "", errors.Wrap(err, "beforeSave hook failed")
 	}
 
-	f.setFilename()
 	filepath, err := f.Storage.Save(f)
 
 	if err != nil {

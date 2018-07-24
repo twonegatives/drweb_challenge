@@ -1,10 +1,8 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
@@ -41,13 +39,7 @@ func main() {
 }
 
 func CreateFile(w http.ResponseWriter, r *http.Request) {
-	contents, _ := ioutil.ReadAll(r.Body)
-	file := drweb.File{
-		Body:        contents,
-		Storage:     &storage,
-		HooksOnSave: &filesavehooks.PrintlnHook{},
-		Encoder:     &encoders.SHA256Encoder{},
-	}
+	file := drweb.NewFile(r.Body, &storage, &filesavehooks.PrintlnHook{}, &encoders.SHA256Encoder{})
 
 	_, err := file.Save()
 
@@ -55,13 +47,9 @@ func CreateFile(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	saved := drweb.SavedFile{
-		Filename: file.GetFilename(),
-	}
-
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(saved)
+	json.NewEncoder(w).Encode(file)
 }
 
 func RetrieveFile(w http.ResponseWriter, req *http.Request) {
@@ -72,8 +60,7 @@ func RetrieveFile(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	r := bytes.NewReader(file.Body)
-	io.Copy(w, r)
+	io.Copy(w, file.Body)
 }
 
 func DeleteFile(w http.ResponseWriter, r *http.Request) {
