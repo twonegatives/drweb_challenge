@@ -38,8 +38,11 @@ type FilePathGenerator interface {
 }
 
 func NewFile(body io.Reader, mimetype textproto.MIMEHeader, storage Storage, nameGenerator FileNameGenerator) (*File, error) {
+	pipeReader, pipeWriter := io.Pipe()
+	filenameReader := io.TeeReader(body, pipeWriter)
+
 	file := File{
-		Body:     body,
+		Body:     filenameReader,
 		Storage:  storage,
 		MimeType: mimetype,
 	}
@@ -49,6 +52,7 @@ func NewFile(body io.Reader, mimetype textproto.MIMEHeader, storage Storage, nam
 		return &file, errors.Wrap(err, "failed to generate filename")
 	}
 
+	file.Body = io.MultiReader(pipeReader, body)
 	file.Filename = filename
 	return &file, nil
 }
