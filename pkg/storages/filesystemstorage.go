@@ -3,7 +3,6 @@ package storages
 import (
 	"io"
 	"os"
-	"path"
 	"path/filepath"
 
 	"github.com/pkg/errors"
@@ -11,17 +10,23 @@ import (
 )
 
 type FileSystemStorage struct {
-	BasePath string
-	FileMode os.FileMode
+	FileMode          os.FileMode
+	FilePathGenerator drweb.FilePathGenerator
 }
 
-func (s *FileSystemStorage) filepath(filename string) string {
-	return path.Join(s.BasePath, filename[0:2], filename[2:4], filename)
+func (s *FileSystemStorage) Filepath(filename string) (string, error) {
+	return s.FilePathGenerator.Generate(filename)
 }
 
 func (s *FileSystemStorage) Save(file *drweb.File) (string, error) {
-	path := s.filepath(file.Filename)
-	if err := os.MkdirAll(filepath.Dir(path), s.FileMode); err != nil {
+	var path string
+	var err error
+
+	if path, err = s.Filepath(file.Filename); err != nil {
+		return path, errors.Wrap(err, "failed to generate filepath")
+	}
+
+	if err = os.MkdirAll(filepath.Dir(path), s.FileMode); err != nil {
 		return path, errors.Wrap(err, "failed to create nested folders")
 	}
 
@@ -47,5 +52,12 @@ func (s *FileSystemStorage) Load(filename string) (*drweb.File, error) {
 }
 
 func (s *FileSystemStorage) Delete(filename string) error {
-	return os.Remove(s.filepath(filename))
+	var path string
+	var err error
+
+	if path, err = s.Filepath(filename); err != nil {
+		return errors.Wrap(err, "failed to generate filepath")
+	}
+
+	return os.Remove(path)
 }

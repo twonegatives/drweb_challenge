@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"log"
+	"mime/multipart"
 	"net/http"
 	"time"
 
@@ -11,14 +12,30 @@ import (
 	"github.com/twonegatives/drweb_challenge/pkg/callbacks"
 	"github.com/twonegatives/drweb_challenge/pkg/config"
 	"github.com/twonegatives/drweb_challenge/pkg/drweb"
-	"github.com/twonegatives/drweb_challenge/pkg/encoders"
+	"github.com/twonegatives/drweb_challenge/pkg/namegenerators"
+	"github.com/twonegatives/drweb_challenge/pkg/pathgenerators"
 	"github.com/twonegatives/drweb_challenge/pkg/storages"
 )
 
-var storage = storages.FileSystemStorage{
-	BasePath: ".",
-	FileMode: 0700,
+// NOTE: we use double folder nesting here in order to overcome
+// issue with too much files lying in a single folder.
+// in case we're ok with a single nesting Levels param may be changed
+var pathgen = pathgenerators.NestedGenerator{
+	Levels:       2,
+	FolderLength: 2,
+	BasePath:     ".",
 }
+
+var storage = storages.FileSystemStorage{
+	FileMode:          0700,
+	FilePathGenerator: &pathgen,
+}
+
+// NOTE: we use some leading file bytes to generate hash and append unix time to it
+// so that it is not required to read the whole file to generate its filename.
+// in case we really want to build filename based on the whole file contents
+// there is another generator for exactly this purpose: namegenerators.SHA256
+var filenamegenerator = namegenerators.LeadingSHA256WithUnixTime{LeadingSize: 50}
 
 func main() {
 	cfg := config.NewConfig()
@@ -49,15 +66,20 @@ func withCallbacks(handler func(http.ResponseWriter, *http.Request), before drwe
 }
 
 func createFile(w http.ResponseWriter, r *http.Request) {
-	file, err := drweb.NewFile(r.Body, &storage, &encoders.SHA256Encoder{})
+	var formFile multipart.File
+	var formFileHeader *multipart.FileHeader
+	var file *drweb.File
+	var err error
 
-	if err != nil {
+	if formFile, formFileHeader, err = r.FormFile("file"); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	_, err = storage.Save(file)
+	if file, err = drweb.NewFile(formFile, formFileHeader.Header, &storage, &filenamegenerator); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 
-	if err != nil {
+	if _, err = storage.Save(file); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
@@ -67,15 +89,17 @@ func createFile(w http.ResponseWriter, r *http.Request) {
 }
 
 func retrieveFile(w http.ResponseWriter, req *http.Request) {
+	var file *drweb.File
+	var err error
+
 	vars := mux.Vars(req)
 	filename := vars["hashstring"]
-	file, err := storage.Load(filename)
 
-	if err != nil {
+	if file, err = storage.Load(filename); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	if _, err := io.Copy(w, file.Body); err != nil {
+	if _, err = io.Copy(w, file.Body); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }

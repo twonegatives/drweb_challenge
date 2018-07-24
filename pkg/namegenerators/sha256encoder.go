@@ -1,4 +1,4 @@
-package encoders
+package namegenerators
 
 import "crypto/sha256"
 
