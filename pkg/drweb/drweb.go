@@ -3,7 +3,7 @@ package drweb
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
+	"time"
 
 	"github.com/pkg/errors"
 )
@@ -30,17 +30,21 @@ type File struct {
 	Filename    string `json:"filename"`
 }
 
-func NewFile(body io.Reader, storage Storage, hooks FileSaveHooks, encoder Encoder) *File {
+func NewFile(body io.Reader, storage Storage, hooks FileSaveHooks, encoder Encoder) (*File, error) {
 	file := File{
 		Body:        body,
 		Storage:     storage,
 		HooksOnSave: hooks,
 	}
 
-	data, _ := ioutil.ReadAll(file.Body)
-	file.Filename = fmt.Sprintf("%x", encoder.Encode(data))
+	leadingChars := make([]byte, 50)
+	if _, err := file.Body.Read(leadingChars); err != nil {
+		return &file, errors.Wrap(err, "failed to build a new file object")
+	}
 
-	return &file
+	file.Filename = fmt.Sprintf("%x-%d", encoder.Encode(leadingChars), time.Now().UnixNano())
+
+	return &file, nil
 }
 
 func (f *File) Save() (string, error) {

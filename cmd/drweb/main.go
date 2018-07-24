@@ -39,9 +39,13 @@ func main() {
 }
 
 func CreateFile(w http.ResponseWriter, r *http.Request) {
-	file := drweb.NewFile(r.Body, &storage, &filesavehooks.PrintlnHook{}, &encoders.SHA256Encoder{})
+	file, err := drweb.NewFile(r.Body, &storage, &filesavehooks.PrintlnHook{}, &encoders.SHA256Encoder{})
 
-	_, err := file.Save()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	_, err = file.Save()
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
