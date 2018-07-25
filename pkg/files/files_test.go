@@ -1,7 +1,8 @@
 package files_test
 
 import (
-	"strings"
+	"bytes"
+	"io/ioutil"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -13,7 +14,8 @@ import (
 func TestNewFile(t *testing.T) {
 	mimetype := "image/png"
 	mockCtrl := gomock.NewController(t)
-	reader := strings.NewReader("Some testing string")
+	reader := ioutil.NopCloser(bytes.NewReader([]byte("Some testing string")))
+	defer reader.Close()
 	nameGenerator := mocks.NewMockFileNameGenerator(mockCtrl)
 
 	file, err := files.NewFile(reader, mimetype, nameGenerator)

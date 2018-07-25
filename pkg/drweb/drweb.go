@@ -18,11 +18,10 @@ type Storage interface {
 	Save(f *File) (string, error)
 	Load(filename string) (*File, error)
 	Delete(filename string) error
-	Filepath(filename string) (string, error)
 }
 
 type File struct {
-	Body          io.Reader
+	Body          io.ReadCloser
 	MimeType      string
 	NameGenerator FileNameGenerator
 }

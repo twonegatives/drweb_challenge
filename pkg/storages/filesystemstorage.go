@@ -15,7 +15,7 @@ type FileSystemStorage struct {
 	FilePathGenerator drweb.FilePathGenerator
 }
 
-func (s *FileSystemStorage) Filepath(filename string) (string, error) {
+func (s *FileSystemStorage) filepath(filename string) (string, error) {
 	return s.FilePathGenerator.Generate(filename)
 }
 
@@ -24,7 +24,15 @@ func (s *FileSystemStorage) Save(file *drweb.File) (string, error) {
 	var path string
 	var err error
 
+	if file.NameGenerator == nil {
+		return filename, errors.New("failed to save file without name generator")
+	}
+
 	tmpfile, err := ioutil.TempFile(os.TempDir(), "prefix")
+	if err != nil {
+		return filename, errors.Wrap(err, "failed to create file")
+	}
+
 	defer tmpfile.Close()
 
 	filenameReader := io.TeeReader(file.Body, tmpfile)
@@ -34,7 +42,7 @@ func (s *FileSystemStorage) Save(file *drweb.File) (string, error) {
 		return filename, errors.Wrap(err, "failed to generate filename")
 	}
 
-	if path, err = s.Filepath(filename); err != nil {
+	if path, err = s.filepath(filename); err != nil {
 		return filename, errors.Wrap(err, "failed to generate filepath")
 	}
 
@@ -51,7 +59,7 @@ func (s *FileSystemStorage) Load(filename string) (*drweb.File, error) {
 	var path string
 	var err error
 
-	if path, err = s.Filepath(filename); err != nil {
+	if path, err = s.filepath(filename); err != nil {
 		return nil, errors.Wrap(err, "failed to generate filepath")
 	}
 
@@ -63,7 +71,7 @@ func (s *FileSystemStorage) Delete(filename string) error {
 	var path string
 	var err error
 
-	if path, err = s.Filepath(filename); err != nil {
+	if path, err = s.filepath(filename); err != nil {
 		return errors.Wrap(err, "failed to generate filepath")
 	}
 

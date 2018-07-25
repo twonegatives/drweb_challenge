@@ -24,18 +24,18 @@ func main() {
 	// NOTE: we use double folder nesting here in order to overcome
 	// issue with too much files lying in a single folder.
 	// in case we're ok with a single nesting Levels param may be changed
-	var pathgen = pathgenerators.NestedGenerator{
+	pathgen := pathgenerators.NestedGenerator{
 		Levels:       2,
 		FolderLength: 2,
 		BasePath:     ".",
 	}
 
-	var storage = storages.FileSystemStorage{
+	storage := storages.FileSystemStorage{
 		FileMode:          0700,
 		FilePathGenerator: &pathgen,
 	}
 
-	var filenamegenerator = namegenerators.SHA256{}
+	filenamegenerator := namegenerators.SHA256{}
 
 	router := mux.NewRouter()
 	startSaveCbk := callbacks.LogCallback{Content: "Started to save a file"}

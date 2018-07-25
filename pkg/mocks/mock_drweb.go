@@ -144,19 +144,6 @@ func (mr *MockStorageMockRecorder) Delete(filename interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockStorage)(nil).Delete), filename)
 }
 
-// Filepath mocks base method
-func (m *MockStorage) Filepath(filename string) (string, error) {
-	ret := m.ctrl.Call(m, "Filepath", filename)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Filepath indicates an expected call of Filepath
-func (mr *MockStorageMockRecorder) Filepath(filename interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Filepath", reflect.TypeOf((*MockStorage)(nil).Filepath), filename)
-}
-
 // MockFileNameGenerator is a mock of FileNameGenerator interface
 type MockFileNameGenerator struct {
 	ctrl     *gomock.Controller
