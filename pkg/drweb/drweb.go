@@ -21,13 +21,13 @@ type Storage interface {
 }
 
 type File struct {
-	Body     io.Reader
-	Filename string `json:"filename"`
-	MimeType textproto.MIMEHeader
+	Body          io.Reader
+	MimeType      string
+	NameGenerator FileNameGenerator
 }
 
 type FileNameGenerator interface {
-	Generate(input io.Reader) (string, error)
+	Generate(input io.Reader, mime textproto.MIMEHeader) (string, error)
 }
 
 type FilePathGenerator interface {

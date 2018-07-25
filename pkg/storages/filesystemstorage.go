@@ -2,6 +2,7 @@ package storages
 
 import (
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -19,36 +20,43 @@ func (s *FileSystemStorage) Filepath(filename string) (string, error) {
 }
 
 func (s *FileSystemStorage) Save(file *drweb.File) (string, error) {
+	var filename string
 	var path string
 	var err error
 
-	if path, err = s.Filepath(file.Filename); err != nil {
-		return path, errors.Wrap(err, "failed to generate filepath")
+	tmpfile, err := ioutil.TempFile(os.TempDir(), "prefix")
+	defer tmpfile.Close()
+
+	filenameReader := io.TeeReader(file.Body, tmpfile)
+	filename, err = file.NameGenerator.Generate(filenameReader, file.MimeType)
+
+	if err != nil {
+		return filename, errors.Wrap(err, "failed to generate filename")
+	}
+
+	if path, err = s.Filepath(filename); err != nil {
+		return filename, errors.Wrap(err, "failed to generate filepath")
 	}
 
 	if err = os.MkdirAll(filepath.Dir(path), s.FileMode); err != nil {
-		return path, errors.Wrap(err, "failed to create nested folders")
+		return filename, errors.Wrap(err, "failed to create nested folders")
 	}
 
-	output, err := os.Create(path)
-	defer output.Close()
-	if err != nil {
-		return path, errors.Wrap(err, "failed to create file")
-	}
+	err = os.Rename(tmpfile.Name(), path)
 
-	_, err = io.Copy(output, file.Body)
-
-	return path, errors.Wrap(err, "failed to write to file")
+	return filename, errors.Wrap(err, "failed to write to file")
 }
 
 func (s *FileSystemStorage) Load(filename string) (*drweb.File, error) {
-	reader, err := os.Open(filename)
+	var path string
+	var err error
 
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to load file")
+	if path, err = s.Filepath(filename); err != nil {
+		return nil, errors.Wrap(err, "failed to generate filepath")
 	}
 
-	return &drweb.File{Body: reader}, nil
+	reader, err := os.Open(path)
+	return &drweb.File{Body: reader}, errors.Wrap(err, "failed to open file")
 }
 
 func (s *FileSystemStorage) Delete(filename string) error {

@@ -68,23 +68,24 @@ func createFileHandler(storage drweb.Storage, filenamegenerator drweb.FileNameGe
 		var formFile multipart.File
 		var formFileHeader *multipart.FileHeader
 		var file *drweb.File
+		var filename string
 		var err error
 
 		if formFile, formFileHeader, err = r.FormFile("file"); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 
-		if file, err = files.NewFile(formFile, formFileHeader.Header, filenamegenerator); err != nil {
+		if file, err = files.NewFile(formFile, formFileHeader.Header.Get("Content-Type"), filenamegenerator); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 
-		if _, err = storage.Save(file); err != nil {
+		if filename, err = storage.Save(file); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(file)
+		json.NewEncoder(w).Encode(map[string]string{"Hashstring": filename})
 	}
 }
 
