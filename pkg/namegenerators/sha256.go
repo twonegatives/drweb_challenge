@@ -16,10 +16,17 @@ func (s *SHA256) Generate(input io.Reader, mimeType string) (string, error) {
 	hasher := sha256.New()
 
 	extensions, err := mime.ExtensionsByType(mimeType)
-	if err != nil || len(extensions) == 0 {
+
+	// TODO: replace mime type checks on save with http.DetectContentType on load
+	if err != nil {
 		return "", errors.Wrap(err, "could not find appropriate file extension")
 	}
 
+	if len(extensions) == 0 {
+		return "", errors.New("could not find appropriate file extension")
+	}
+
+	// TODO: move to own error classes
 	if _, err := io.Copy(hasher, input); err != nil {
 		return "", errors.Wrap(err, "failed to hashify input stream")
 	}

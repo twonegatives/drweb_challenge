@@ -2,8 +2,9 @@ package drweb
 
 import (
 	"io"
-	"net/textproto"
 )
+
+//go:generate mockgen -source=drweb.go -destination ../mocks/mock_drweb.go -package mocks
 
 type Encoder interface {
 	Encode(input []byte) []byte
@@ -27,7 +28,7 @@ type File struct {
 }
 
 type FileNameGenerator interface {
-	Generate(input io.Reader, mime textproto.MIMEHeader) (string, error)
+	Generate(input io.Reader, mimeType string) (string, error)
 }
 
 type FilePathGenerator interface {

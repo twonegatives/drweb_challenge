@@ -1,2 +1,4 @@
 tags
 vendor/
+tmp/*
+!tmp/.keep

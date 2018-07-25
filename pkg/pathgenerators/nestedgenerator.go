@@ -33,5 +33,5 @@ func (g *NestedGenerator) Generate(filename string) (string, error) {
 		resultPath = path.Join(resultPath, filename[lower:upper])
 	}
 
-	return resultPath, nil
+	return path.Join(resultPath, filename), nil
 }
