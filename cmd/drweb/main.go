@@ -12,6 +12,7 @@ import (
 	"github.com/twonegatives/drweb_challenge/pkg/callbacks"
 	"github.com/twonegatives/drweb_challenge/pkg/config"
 	"github.com/twonegatives/drweb_challenge/pkg/drweb"
+	"github.com/twonegatives/drweb_challenge/pkg/files"
 	"github.com/twonegatives/drweb_challenge/pkg/namegenerators"
 	"github.com/twonegatives/drweb_challenge/pkg/pathgenerators"
 	"github.com/twonegatives/drweb_challenge/pkg/storages"
@@ -34,11 +35,7 @@ func main() {
 		FilePathGenerator: &pathgen,
 	}
 
-	// NOTE: we use some leading file bytes to generate hash and append unix time to it
-	// so that it is not required to read the whole file to generate its filename.
-	// in case we really want to build filename based on the whole file contents
-	// there is another generator for exactly this purpose: namegenerators.SHA256
-	var filenamegenerator = namegenerators.LeadingSHA256WithUnixTime{LeadingSize: 50}
+	var filenamegenerator = namegenerators.SHA256{}
 
 	router := mux.NewRouter()
 	startSaveCbk := callbacks.LogCallback{Content: "Started to save a file"}
@@ -77,7 +74,7 @@ func createFileHandler(storage drweb.Storage, filenamegenerator drweb.FileNameGe
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 
-		if file, err = drweb.NewFile(formFile, formFileHeader.Header, storage, filenamegenerator); err != nil {
+		if file, err = files.NewFile(formFile, formFileHeader.Header, filenamegenerator); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 
