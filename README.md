@@ -7,6 +7,18 @@ Golang code challange was to implement a filestore with http access:
 3. User may download a file by requesting it with its hash;
 4. User may remove a file with its hash aswell.
 
+## Configuration settings
+
+Configuration settings might be passed to application via environment variables.
+
+* `LISTEN` - `host:port` for server. Default: `:80`
+* `WRITE_TIMEOUT` - Duration within which the whole request must be written back to the client (seconds). Default: `15`
+* `READ_TIMEOUT` - Duration within which the whole request must be read from the client (seconds). Default: `15`
+* `PATH_NESTED_LEVELS` - How many levels of nesting should be used when storing a file. Default: `2`
+* `PATH_NESTED_FOLDERS_LENGTH` - How many characters should each folder's name consist of. Default: `2`
+* `PATH_BASE` - Where to store files and corresponding folders. Default: `.`
+* `STORAGE_FILE_MODE` - What filemode to use when creating files and folders. Default: `0700`
+
 ## Firing up
 
 ```

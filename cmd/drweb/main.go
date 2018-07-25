@@ -6,6 +6,7 @@ import (
 	"log"
 	"mime/multipart"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -21,17 +22,14 @@ import (
 func main() {
 	cfg := config.GetConfig()
 
-	// NOTE: we use double folder nesting here in order to overcome
-	// issue with too much files lying in a single folder.
-	// in case we're ok with a single nesting Levels param may be changed
 	pathgen := pathgenerators.NestedGenerator{
-		Levels:       2,
-		FolderLength: 2,
-		BasePath:     ".",
+		Levels:       cfg.GetInt("PATH_NESTED_LEVELS"),
+		FolderLength: cfg.GetInt("PATH_NESTED_FOLDERS_LENGTH"),
+		BasePath:     cfg.GetString("PATH_BASE"),
 	}
 
 	storage := storages.FileSystemStorage{
-		FileMode:          0700,
+		FileMode:          os.FileMode(cfg.GetInt("STORAGE_FILE_MODE")),
 		FilePathGenerator: &pathgen,
 	}
 
