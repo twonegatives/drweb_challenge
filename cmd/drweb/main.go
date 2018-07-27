@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
 	"github.com/twonegatives/drweb_challenge/pkg/callbacks"
 	"github.com/twonegatives/drweb_challenge/pkg/config"
 	"github.com/twonegatives/drweb_challenge/pkg/drweb"
@@ -38,10 +39,10 @@ func main() {
 	router := mux.NewRouter()
 	startSaveCbk := callbacks.LogCallback{Content: "Started to save a file"}
 	finishSaveCbk := callbacks.LogCallback{Content: "Finished file saving process"}
-	createFile := createFileHandler(&storage, &filenamegenerator)
-	router.HandleFunc("/files", withCallbacks(createFile, &startSaveCbk, &finishSaveCbk)).Methods("POST")
-	router.HandleFunc("/files/{hashstring}", retrieveFileHandler(&storage)).Methods("GET")
-	router.HandleFunc("/files/{hashstring}", deleteFileHandler(&storage)).Methods("DELETE")
+	createFile := CreateFileHandler(&storage, &filenamegenerator)
+	router.HandleFunc("/files", WithCallbacks(createFile, &startSaveCbk, &finishSaveCbk)).Methods("POST")
+	router.HandleFunc("/files/{hashstring}", RetrieveFileHandler(&storage)).Methods("GET")
+	router.HandleFunc("/files/{hashstring}", DeleteFileHandler(&storage)).Methods("DELETE")
 
 	srv := &http.Server{
 		Handler:      router,
@@ -53,7 +54,7 @@ func main() {
 	log.Fatal(srv.ListenAndServe())
 }
 
-func withCallbacks(handler func(http.ResponseWriter, *http.Request), before drweb.Callback, after drweb.Callback) func(http.ResponseWriter, *http.Request) {
+func WithCallbacks(handler func(http.ResponseWriter, *http.Request), before drweb.Callback, after drweb.Callback) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		before.Invoke(w, r)
 		defer after.Invoke(w, r)
@@ -61,7 +62,7 @@ func withCallbacks(handler func(http.ResponseWriter, *http.Request), before drwe
 	}
 }
 
-func createFileHandler(storage drweb.Storage, filenamegenerator drweb.FileNameGenerator) func(http.ResponseWriter, *http.Request) {
+func CreateFileHandler(storage drweb.Storage, filenamegenerator drweb.FileNameGenerator) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var formFile multipart.File
 		var formFileHeader *multipart.FileHeader
@@ -87,7 +88,7 @@ func createFileHandler(storage drweb.Storage, filenamegenerator drweb.FileNameGe
 	}
 }
 
-func retrieveFileHandler(storage drweb.Storage) func(http.ResponseWriter, *http.Request) {
+func RetrieveFileHandler(storage drweb.Storage) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		var file *drweb.File
 		var err error
@@ -105,12 +106,15 @@ func retrieveFileHandler(storage drweb.Storage) func(http.ResponseWriter, *http.
 	}
 }
 
-func deleteFileHandler(storage drweb.Storage) func(http.ResponseWriter, *http.Request) {
+func DeleteFileHandler(storage drweb.Storage) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-
 		if err := storage.Delete(vars["hashstring"]); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			if os.IsNotExist(errors.Cause(err)) {
+				http.Error(w, err.Error(), http.StatusNotFound)
+			} else {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
 		}
 	}
 }

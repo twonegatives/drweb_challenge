@@ -26,7 +26,6 @@ func (s *SHA256) Generate(input io.Reader, mimeType string) (string, error) {
 		return "", errors.New("could not find appropriate file extension")
 	}
 
-	// TODO: move to own error classes
 	if _, err := io.Copy(hasher, input); err != nil {
 		return "", errors.Wrap(err, "failed to hashify input stream")
 	}

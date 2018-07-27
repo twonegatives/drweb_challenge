@@ -16,6 +16,22 @@ import (
 	"github.com/twonegatives/drweb_challenge/pkg/storages"
 )
 
+func TestDeleteUnexistantFile(t *testing.T) {
+	filename := "delete_me1"
+	path := path.Join("../../tmp", filename)
+
+	mockCtrl := gomock.NewController(t)
+	pathgen := mocks.NewMockFilePathGenerator(mockCtrl)
+	pathgen.EXPECT().Generate(filename).Return(path, nil)
+	storage := storages.FileSystemStorage{
+		FilePathGenerator: pathgen,
+	}
+
+	err := storage.Delete(filename)
+	assert.NotNil(t, err)
+	assert.Equal(t, true, os.IsNotExist(err))
+}
+
 func TestDeleteBrokenFilepath(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	pathgen := mocks.NewMockFilePathGenerator(mockCtrl)
@@ -34,7 +50,7 @@ func TestDeleteSuccess(t *testing.T) {
 	path := path.Join("../../tmp", filename)
 	err := ioutil.WriteFile(path, []byte("contents"), 0644)
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 
 	mockCtrl := gomock.NewController(t)
@@ -70,7 +86,7 @@ func TestLoadSuccess(t *testing.T) {
 	path := path.Join("../../tmp", filename)
 	err := ioutil.WriteFile(path, []byte("contents"), 0644)
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 
 	defer os.Remove(path)
@@ -169,7 +185,7 @@ func TestSaveSuccess(t *testing.T) {
 	defer os.Remove(path)
 
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 
 	bytes, err := ioutil.ReadFile(path)
