@@ -107,6 +107,22 @@ func TestLoadSuccess(t *testing.T) {
 	assert.Equal(t, contents, []byte("contents"))
 }
 
+func TestLoadUnexistantFile(t *testing.T) {
+	filename := "load_unexistant"
+	path := path.Join("../../tmp", filename)
+
+	mockCtrl := gomock.NewController(t)
+	pathgen := mocks.NewMockFilePathGenerator(mockCtrl)
+	pathgen.EXPECT().Generate(filename).Return(path, nil)
+	storage := storages.FileSystemStorage{
+		FilePathGenerator: pathgen,
+	}
+
+	_, err := storage.Load(filename)
+	assert.NotNil(t, err)
+	assert.Equal(t, true, os.IsNotExist(errors.Cause(err)))
+}
+
 func TestSaveBlankNameGenerator(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 

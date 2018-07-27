@@ -97,11 +97,17 @@ func RetrieveFileHandler(storage drweb.Storage) func(http.ResponseWriter, *http.
 		filename := vars["hashstring"]
 
 		if file, err = storage.Load(filename); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			if os.IsNotExist(errors.Cause(err)) {
+				http.Error(w, err.Error(), http.StatusNotFound)
+			} else {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+			return
 		}
 
 		if _, err = io.Copy(w, file.Body); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 	}
 }
@@ -112,9 +118,10 @@ func DeleteFileHandler(storage drweb.Storage) func(http.ResponseWriter, *http.Re
 		if err := storage.Delete(vars["hashstring"]); err != nil {
 			if os.IsNotExist(errors.Cause(err)) {
 				http.Error(w, err.Error(), http.StatusNotFound)
-			} else {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
 			}
+
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	}
 }
