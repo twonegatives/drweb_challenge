@@ -18,8 +18,7 @@ func TestNewFile(t *testing.T) {
 	defer reader.Close()
 	nameGenerator := mocks.NewMockFileNameGenerator(mockCtrl)
 
-	file, err := files.NewFile(reader, mimetype, nameGenerator)
-	assert.Nil(t, err)
+	file := files.NewFile(reader, mimetype, nameGenerator)
 	assert.Equal(t, mimetype, file.MimeType)
 	assert.Equal(t, reader, file.Body)
 	assert.Equal(t, nameGenerator, file.NameGenerator)

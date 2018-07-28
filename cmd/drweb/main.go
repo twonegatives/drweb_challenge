@@ -71,15 +71,15 @@ func CreateFileHandler(storage drweb.Storage, filenamegenerator drweb.FileNameGe
 		var err error
 
 		if formFile, formFileHeader, err = r.FormFile("file"); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 
-		if file, err = files.NewFile(formFile, formFileHeader.Header.Get("Content-Type"), filenamegenerator); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
+		file = files.NewFile(formFile, formFileHeader.Header.Get("Content-Type"), filenamegenerator)
 
 		if filename, err = storage.Save(file); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
 		w.Header().Set("Content-Type", "application/json")

@@ -2,6 +2,8 @@ package main_test
 
 import (
 	"bytes"
+	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -15,7 +17,85 @@ import (
 	main "github.com/twonegatives/drweb_challenge/cmd/drweb"
 	"github.com/twonegatives/drweb_challenge/pkg/drweb"
 	"github.com/twonegatives/drweb_challenge/pkg/mocks"
+	"github.com/twonegatives/drweb_challenge/pkg/testutils"
 )
+
+func TestSaveFileHandlerWithoutFileForm(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	storage := mocks.NewMockStorage(mockCtrl)
+	filenamegenerator := mocks.NewMockFileNameGenerator(mockCtrl)
+
+	req, err := http.NewRequest("POST", "/files", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+	router := mux.NewRouter()
+	router.HandleFunc("/files", main.CreateFileHandler(storage, filenamegenerator))
+	router.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
+}
+
+func TestSaveFileHandlerWithStorageFail(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	storage := mocks.NewMockStorage(mockCtrl)
+	storage.EXPECT().Save(gomock.Any()).Return("", errors.New("storage is corrupted"))
+	filenamegenerator := mocks.NewMockFileNameGenerator(mockCtrl)
+
+	multipartBody, multipartBoundary, err := testutils.FileToMultipartForm("original_filename", []byte("Byte file contents"), "file")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req, err := http.NewRequest("POST", "/files", multipartBody)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req.Header.Set("Content-Type", fmt.Sprintf("multipart/form-data; boundary=\"%s\"", multipartBoundary))
+
+	rr := httptest.NewRecorder()
+	router := mux.NewRouter()
+	router.HandleFunc("/files", main.CreateFileHandler(storage, filenamegenerator))
+	router.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusInternalServerError, rr.Code)
+}
+
+func TestSaveFileHandlerSuccess(t *testing.T) {
+	filename := "filename_to_user"
+	mockCtrl := gomock.NewController(t)
+	storage := mocks.NewMockStorage(mockCtrl)
+	storage.EXPECT().Save(gomock.Any()).Return(filename, nil)
+	filenamegenerator := mocks.NewMockFileNameGenerator(mockCtrl)
+
+	multipartBody, multipartBoundary, err := testutils.FileToMultipartForm("original_filename", []byte("Byte file contents"), "file")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req, err := http.NewRequest("POST", "/files", multipartBody)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req.Header.Set("Content-Type", fmt.Sprintf("multipart/form-data; boundary=\"%s\"", multipartBoundary))
+
+	rr := httptest.NewRecorder()
+	router := mux.NewRouter()
+	router.HandleFunc("/files", main.CreateFileHandler(storage, filenamegenerator))
+	router.ServeHTTP(rr, req)
+
+	var jsonResponse map[string]string
+	if err := json.NewDecoder(rr.Body).Decode(&jsonResponse); err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, http.StatusCreated, rr.Code)
+	assert.Equal(t, map[string]string{"Hashstring": filename}, jsonResponse)
+}
 
 func TestRetrieveFileHandlerSuccess(t *testing.T) {
 	filename := "some_saved_file"
