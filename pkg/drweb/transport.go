@@ -100,7 +100,6 @@ func DeleteFileHandler(storage Storage) func(http.ResponseWriter, *http.Request)
 		if err := storage.Delete(vars["hashstring"]); err != nil {
 			if os.IsNotExist(errors.Cause(err)) {
 				w.WriteHeader(http.StatusNotFound)
-				writeJSONError(&w, err)
 				return
 			}
 

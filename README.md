@@ -10,6 +10,95 @@ Golang code challange was to implement a filestore with http access:
 3. User may download a file by requesting it with its hash;
 4. User may remove a file with its hash aswell.
 
+## Key endpoints
+
+<table>
+  <thead>
+    <tr>
+      <th>Method</th>
+      <th>Path</th>
+      <th>Body params</th>
+      <th>Code</th>
+      <th>Response body</th>
+      <th>Explanation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>POST</th>
+      <th>/files</th>
+      <th>file: form</th>
+      <th>201</th>
+      <th>{hashstring: string}</th>
+      <th>Created succesfully</th>
+    </tr>
+    <tr>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th>400</th>
+      <th>{error: string}</th>
+      <th>Could not parse form data</th>
+    </tr>
+    <tr>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th>500</th>
+      <th>{error: string}</th>
+      <th>Server error</th>
+    </tr>
+    <tr>
+      <th>GET</th>
+      <th>/files/filename</th>
+      <th></th>
+      <th>200</th>
+      <th>File contents</th>
+      <th>Successfull download</th>
+    </tr>
+    <tr>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th>404</th>
+      <th></th>
+      <th>Requested file was not found</th>
+    </tr>
+    <tr>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th>500</th>
+      <th>{error: string}</th>
+      <th>Server error</th>
+    </tr>
+    <tr>
+      <th>DELETE</th>
+      <th>/files/filename</th>
+      <th></th>
+      <th>200</th>
+      <th></th>
+      <th>Deleted succesfully</th>
+    </tr>
+    <tr>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th>404</th>
+      <th></th>
+      <th>Requested file was not found</th>
+    </tr>
+    <tr>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th>500</th>
+      <th>{error: string}</th>
+      <th>Server error</th>
+    </tr>
+  </tbody>
+</table>
+
 ## Configuration settings
 
 Configuration settings might be passed to application via environment variables.
