@@ -34,7 +34,12 @@ func TestSaveFileHandlerWithoutFileForm(t *testing.T) {
 	router.HandleFunc("/files", drweb.CreateFileHandler(storage, filenamegenerator))
 	router.ServeHTTP(rr, req)
 
+	var response map[string]string
+	json.Unmarshal(rr.Body.Bytes(), &response)
+
 	assert.Equal(t, http.StatusBadRequest, rr.Code)
+	assert.Equal(t, "application/json", rr.Header().Get("Content-Type"))
+	assert.NotNil(t, response["error"])
 }
 
 func TestSaveFileHandlerWithStorageFail(t *testing.T) {
@@ -60,7 +65,12 @@ func TestSaveFileHandlerWithStorageFail(t *testing.T) {
 	router.HandleFunc("/files", drweb.CreateFileHandler(storage, filenamegenerator))
 	router.ServeHTTP(rr, req)
 
+	var response map[string]string
+	json.Unmarshal(rr.Body.Bytes(), &response)
+
 	assert.Equal(t, http.StatusInternalServerError, rr.Code)
+	assert.Equal(t, "application/json", rr.Header().Get("Content-Type"))
+	assert.NotNil(t, response["error"])
 }
 
 func TestSaveFileHandlerSuccess(t *testing.T) {
@@ -87,13 +97,12 @@ func TestSaveFileHandlerSuccess(t *testing.T) {
 	router.HandleFunc("/files", drweb.CreateFileHandler(storage, filenamegenerator))
 	router.ServeHTTP(rr, req)
 
-	var jsonResponse map[string]string
-	if err := json.NewDecoder(rr.Body).Decode(&jsonResponse); err != nil {
-		t.Fatal(err)
-	}
+	var response map[string]string
+	json.Unmarshal(rr.Body.Bytes(), &response)
 
 	assert.Equal(t, http.StatusCreated, rr.Code)
-	assert.Equal(t, map[string]string{"Hashstring": filename}, jsonResponse)
+	assert.Equal(t, "application/json", rr.Header().Get("Content-Type"))
+	assert.Equal(t, map[string]string{"hashstring": filename}, response)
 }
 
 func TestRetrieveFileHandlerUnknownTypeSuccess(t *testing.T) {
@@ -161,6 +170,7 @@ func TestRetrieveFileHandlerNotFound(t *testing.T) {
 	router.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusNotFound, rr.Code)
+	assert.Equal(t, "application/json", rr.Header().Get("Content-Type"))
 }
 
 func TestDeleteFileHandlerSuccess(t *testing.T) {
@@ -180,6 +190,7 @@ func TestDeleteFileHandlerSuccess(t *testing.T) {
 	router.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
+	assert.Equal(t, "application/json", rr.Header().Get("Content-Type"))
 	assert.Empty(t, rr.Body.String())
 }
 
@@ -199,5 +210,10 @@ func TestDeleteFileHandlerNotFound(t *testing.T) {
 	router.HandleFunc("/files/{hashstring}", drweb.DeleteFileHandler(storage))
 	router.ServeHTTP(rr, req)
 
+	var response map[string]string
+	json.Unmarshal(rr.Body.Bytes(), &response)
+
 	assert.Equal(t, http.StatusNotFound, rr.Code)
+	assert.Equal(t, "application/json", rr.Header().Get("Content-Type"))
+	assert.NotNil(t, response["error"])
 }
