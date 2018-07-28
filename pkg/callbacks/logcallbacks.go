@@ -2,8 +2,9 @@ package callbacks
 
 import (
 	"fmt"
-	"log"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type LogCallback struct {
@@ -11,5 +12,5 @@ type LogCallback struct {
 }
 
 func (c *LogCallback) Invoke(args ...interface{}) {
-	log.Println(fmt.Sprintf("[%s] %s", time.Now().Format(time.RFC3339), c.Content))
+	log.Info(fmt.Sprintf("[%s] %s", time.Now().Format(time.RFC3339), c.Content))
 }

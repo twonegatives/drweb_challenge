@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/twonegatives/drweb_challenge/pkg/callbacks"
 	"github.com/twonegatives/drweb_challenge/pkg/config"
 	"github.com/twonegatives/drweb_challenge/pkg/drweb"
@@ -22,6 +22,8 @@ import (
 
 func main() {
 	cfg := config.GetConfig()
+
+	log.SetFormatter(&log.JSONFormatter{})
 
 	pathgen := pathgenerators.NestedGenerator{
 		Levels:       cfg.GetInt("PATH_NESTED_LEVELS"),
@@ -71,17 +73,21 @@ func CreateFileHandler(storage drweb.Storage, filenamegenerator drweb.FileNameGe
 		var err error
 
 		if formFile, formFileHeader, err = r.FormFile("file"); err != nil {
+			log.WithError(err).Error("failed to get a form file")
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
+		// TODO file type from its bytes?
 		file = files.NewFile(formFile, formFileHeader.Header.Get("Content-Type"), filenamegenerator)
 
 		if filename, err = storage.Save(file); err != nil {
+			log.WithError(err).Error("failed to save file")
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
+		// TODO check json is everywhere
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(map[string]string{"Hashstring": filename})
@@ -96,16 +102,19 @@ func RetrieveFileHandler(storage drweb.Storage) func(http.ResponseWriter, *http.
 		vars := mux.Vars(req)
 		filename := vars["hashstring"]
 
+		// TODO set correct file type
 		if file, err = storage.Load(filename); err != nil {
 			if os.IsNotExist(errors.Cause(err)) {
 				http.Error(w, err.Error(), http.StatusNotFound)
 			} else {
+				log.WithError(err).Error("failed to load file from storage")
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
 			return
 		}
 
 		if _, err = io.Copy(w, file.Body); err != nil {
+			log.WithError(err).Error("failed to stream file to client")
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -121,7 +130,9 @@ func DeleteFileHandler(storage drweb.Storage) func(http.ResponseWriter, *http.Re
 				return
 			}
 
+			log.WithError(err).Error("failed to delete file from storage")
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 	}
 }
