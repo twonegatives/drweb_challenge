@@ -1,0 +1,66 @@
+
+mode: atomic
+github.com/twonegatives/drweb_challenge/cmd/drweb/main.go:24.13,58.2 14 0
+github.com/twonegatives/drweb_challenge/cmd/drweb/main.go:60.156,61.54 1 0
+github.com/twonegatives/drweb_challenge/cmd/drweb/main.go:61.54,65.3 3 0
+github.com/twonegatives/drweb_challenge/cmd/drweb/main.go:68.131,69.54 1 3
+github.com/twonegatives/drweb_challenge/cmd/drweb/main.go:69.54,76.69 6 3
+github.com/twonegatives/drweb_challenge/cmd/drweb/main.go:82.3,88.53 2 2
+github.com/twonegatives/drweb_challenge/cmd/drweb/main.go:95.3,97.71 3 1
+github.com/twonegatives/drweb_challenge/cmd/drweb/main.go:76.69,80.4 3 1
+github.com/twonegatives/drweb_challenge/cmd/drweb/main.go:88.53,92.4 3 1
+github.com/twonegatives/drweb_challenge/cmd/drweb/main.go:101.90,102.56 1 3
+github.com/twonegatives/drweb_challenge/cmd/drweb/main.go:102.56,109.53 5 3
+github.com/twonegatives/drweb_challenge/cmd/drweb/main.go:119.3,120.27 2 2
+github.com/twonegatives/drweb_challenge/cmd/drweb/main.go:126.3,128.49 2 2
+github.com/twonegatives/drweb_challenge/cmd/drweb/main.go:109.53,110.40 1 1
+github.com/twonegatives/drweb_challenge/cmd/drweb/main.go:116.4,116.10 1 1
+github.com/twonegatives/drweb_challenge/cmd/drweb/main.go:110.40,112.5 1 1
+github.com/twonegatives/drweb_challenge/cmd/drweb/main.go:112.10,115.5 2 0
+github.com/twonegatives/drweb_challenge/cmd/drweb/main.go:120.27,121.72 1 1
+github.com/twonegatives/drweb_challenge/cmd/drweb/main.go:121.72,123.5 1 1
+github.com/twonegatives/drweb_challenge/cmd/drweb/main.go:128.49,132.4 3 0
+github.com/twonegatives/drweb_challenge/cmd/drweb/main.go:136.88,137.54 1 2
+github.com/twonegatives/drweb_challenge/cmd/drweb/main.go:137.54,139.60 2 2
+github.com/twonegatives/drweb_challenge/cmd/drweb/main.go:139.60,140.40 1 1
+github.com/twonegatives/drweb_challenge/cmd/drweb/main.go:145.4,147.10 3 0
+github.com/twonegatives/drweb_challenge/cmd/drweb/main.go:140.40,143.5 2 1
+mode: atomic
+mode: atomic
+mode: atomic
+mode: atomic
+github.com/twonegatives/drweb_challenge/pkg/namegenerators/sha256.go:14.78,17.50 2 3
+github.com/twonegatives/drweb_challenge/pkg/namegenerators/sha256.go:21.2,21.61 1 2
+github.com/twonegatives/drweb_challenge/pkg/namegenerators/sha256.go:17.50,19.3 1 1
+mode: atomic
+github.com/twonegatives/drweb_challenge/pkg/pathgenerators/nestedgenerator.go:14.69,17.18 2 4
+github.com/twonegatives/drweb_challenge/pkg/pathgenerators/nestedgenerator.go:21.2,21.40 1 3
+github.com/twonegatives/drweb_challenge/pkg/pathgenerators/nestedgenerator.go:25.2,25.45 1 2
+github.com/twonegatives/drweb_challenge/pkg/pathgenerators/nestedgenerator.go:30.2,30.32 1 1
+github.com/twonegatives/drweb_challenge/pkg/pathgenerators/nestedgenerator.go:36.2,36.45 1 1
+github.com/twonegatives/drweb_challenge/pkg/pathgenerators/nestedgenerator.go:17.18,19.3 1 1
+github.com/twonegatives/drweb_challenge/pkg/pathgenerators/nestedgenerator.go:21.40,23.3 1 1
+github.com/twonegatives/drweb_challenge/pkg/pathgenerators/nestedgenerator.go:25.45,28.3 2 1
+github.com/twonegatives/drweb_challenge/pkg/pathgenerators/nestedgenerator.go:30.32,34.3 3 2
+mode: atomic
+github.com/twonegatives/drweb_challenge/pkg/storages/filesystemstorage.go:18.71,20.2 1 9
+github.com/twonegatives/drweb_challenge/pkg/storages/filesystemstorage.go:22.68,27.31 4 4
+github.com/twonegatives/drweb_challenge/pkg/storages/filesystemstorage.go:31.2,32.16 2 3
+github.com/twonegatives/drweb_challenge/pkg/storages/filesystemstorage.go:36.2,41.16 4 3
+github.com/twonegatives/drweb_challenge/pkg/storages/filesystemstorage.go:45.2,45.50 1 2
+github.com/twonegatives/drweb_challenge/pkg/storages/filesystemstorage.go:49.2,49.67 1 1
+github.com/twonegatives/drweb_challenge/pkg/storages/filesystemstorage.go:53.2,55.62 2 1
+github.com/twonegatives/drweb_challenge/pkg/storages/filesystemstorage.go:27.31,29.3 1 1
+github.com/twonegatives/drweb_challenge/pkg/storages/filesystemstorage.go:32.16,34.3 1 0
+github.com/twonegatives/drweb_challenge/pkg/storages/filesystemstorage.go:41.16,43.3 1 1
+github.com/twonegatives/drweb_challenge/pkg/storages/filesystemstorage.go:45.50,47.3 1 1
+github.com/twonegatives/drweb_challenge/pkg/storages/filesystemstorage.go:49.67,51.3 1 0
+github.com/twonegatives/drweb_challenge/pkg/storages/filesystemstorage.go:58.72,64.50 5 4
+github.com/twonegatives/drweb_challenge/pkg/storages/filesystemstorage.go:68.2,68.45 1 3
+github.com/twonegatives/drweb_challenge/pkg/storages/filesystemstorage.go:72.2,77.18 2 2
+github.com/twonegatives/drweb_challenge/pkg/storages/filesystemstorage.go:64.50,66.3 1 1
+github.com/twonegatives/drweb_challenge/pkg/storages/filesystemstorage.go:68.45,70.3 1 1
+github.com/twonegatives/drweb_challenge/pkg/storages/filesystemstorage.go:80.59,84.50 3 3
+github.com/twonegatives/drweb_challenge/pkg/storages/filesystemstorage.go:88.2,88.24 1 2
+github.com/twonegatives/drweb_challenge/pkg/storages/filesystemstorage.go:84.50,86.3 1 1
+mode: atomic

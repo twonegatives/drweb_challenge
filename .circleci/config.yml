@@ -22,5 +22,10 @@ jobs:
       - checkout
 
       # specify any bash command here prefixed with `run: `
-      - run: dep ensure
-      - run: go test -v ./...
+      - run:
+          command: dep ensure
+      - run:
+          command: ./test.sh
+      - run:
+          command: bash <(curl -s https://codecov.io/bash) || echo 'Codecov failed to upload.'
+          when: on_success

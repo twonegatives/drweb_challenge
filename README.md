@@ -1,4 +1,5 @@
 [![CircleCI](https://circleci.com/gh/twonegatives/drweb_challenge.svg?style=svg)](https://circleci.com/gh/twonegatives/drweb_challenge)
+[![codecov](https://codecov.io/gh/twonegatives/drweb_challenge/branch/master/graph/badge.svg)](https://codecov.io/gh/twonegatives/drweb_challenge)
 
 # DrWeb challange
 
