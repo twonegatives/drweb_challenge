@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/twonegatives/drweb_challenge.svg?style=svg)](https://circleci.com/gh/twonegatives/drweb_challenge)
+
 # DrWeb challange
 
 Golang code challange was to implement a filestore with http access:
