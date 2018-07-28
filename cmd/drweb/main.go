@@ -3,9 +3,11 @@ package main
 import (
 	"encoding/json"
 	"io"
+	"mime"
 	"mime/multipart"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -14,7 +16,6 @@ import (
 	"github.com/twonegatives/drweb_challenge/pkg/callbacks"
 	"github.com/twonegatives/drweb_challenge/pkg/config"
 	"github.com/twonegatives/drweb_challenge/pkg/drweb"
-	"github.com/twonegatives/drweb_challenge/pkg/files"
 	"github.com/twonegatives/drweb_challenge/pkg/namegenerators"
 	"github.com/twonegatives/drweb_challenge/pkg/pathgenerators"
 	"github.com/twonegatives/drweb_challenge/pkg/storages"
@@ -78,8 +79,11 @@ func CreateFileHandler(storage drweb.Storage, filenamegenerator drweb.FileNameGe
 			return
 		}
 
-		// TODO file type from its bytes?
-		file = files.NewFile(formFile, formFileHeader.Header.Get("Content-Type"), filenamegenerator)
+		file = &drweb.File{
+			Body:          formFile,
+			NameGenerator: filenamegenerator,
+			Extension:     filepath.Ext(formFileHeader.Filename),
+		}
 
 		if filename, err = storage.Save(file); err != nil {
 			log.WithError(err).Error("failed to save file")
@@ -102,7 +106,6 @@ func RetrieveFileHandler(storage drweb.Storage) func(http.ResponseWriter, *http.
 		vars := mux.Vars(req)
 		filename := vars["hashstring"]
 
-		// TODO set correct file type
 		if file, err = storage.Load(filename); err != nil {
 			if os.IsNotExist(errors.Cause(err)) {
 				http.Error(w, err.Error(), http.StatusNotFound)
@@ -112,6 +115,15 @@ func RetrieveFileHandler(storage drweb.Storage) func(http.ResponseWriter, *http.
 			}
 			return
 		}
+
+		mimetype := "application/octet-stream"
+		if file.Extension != "" {
+			if inferred := mime.TypeByExtension(file.Extension); inferred != "" {
+				mimetype = inferred
+			}
+		}
+
+		w.Header().Set("Content-Type", mimetype)
 
 		if _, err = io.Copy(w, file.Body); err != nil {
 			log.WithError(err).Error("failed to stream file to client")

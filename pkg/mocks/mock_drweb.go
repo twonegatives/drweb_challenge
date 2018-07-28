@@ -168,16 +168,16 @@ func (m *MockFileNameGenerator) EXPECT() *MockFileNameGeneratorMockRecorder {
 }
 
 // Generate mocks base method
-func (m *MockFileNameGenerator) Generate(input io.Reader, mimeType string) (string, error) {
-	ret := m.ctrl.Call(m, "Generate", input, mimeType)
+func (m *MockFileNameGenerator) Generate(input io.Reader, extension string) (string, error) {
+	ret := m.ctrl.Call(m, "Generate", input, extension)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Generate indicates an expected call of Generate
-func (mr *MockFileNameGeneratorMockRecorder) Generate(input, mimeType interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Generate", reflect.TypeOf((*MockFileNameGenerator)(nil).Generate), input, mimeType)
+func (mr *MockFileNameGeneratorMockRecorder) Generate(input, extension interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Generate", reflect.TypeOf((*MockFileNameGenerator)(nil).Generate), input, extension)
 }
 
 // MockFilePathGenerator is a mock of FilePathGenerator interface

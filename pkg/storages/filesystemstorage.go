@@ -36,7 +36,7 @@ func (s *FileSystemStorage) Save(file *drweb.File) (string, error) {
 	defer tmpfile.Close()
 
 	filenameReader := io.TeeReader(file.Body, tmpfile)
-	filename, err = file.NameGenerator.Generate(filenameReader, file.MimeType)
+	filename, err = file.NameGenerator.Generate(filenameReader, file.Extension)
 
 	if err != nil {
 		return filename, errors.Wrap(err, "failed to generate filename")
@@ -56,6 +56,8 @@ func (s *FileSystemStorage) Save(file *drweb.File) (string, error) {
 }
 
 func (s *FileSystemStorage) Load(filename string) (*drweb.File, error) {
+	var file *drweb.File
+	var reader io.ReadCloser
 	var path string
 	var err error
 
@@ -63,8 +65,16 @@ func (s *FileSystemStorage) Load(filename string) (*drweb.File, error) {
 		return nil, errors.Wrap(err, "failed to generate filepath")
 	}
 
-	reader, err := os.Open(path)
-	return &drweb.File{Body: reader}, errors.Wrap(err, "failed to open file")
+	if reader, err = os.Open(path); err != nil {
+		return nil, errors.Wrap(err, "failed to open file")
+	}
+
+	file = &drweb.File{
+		Body:      reader,
+		Extension: filepath.Ext(filename),
+	}
+
+	return file, nil
 }
 
 func (s *FileSystemStorage) Delete(filename string) error {

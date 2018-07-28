@@ -22,12 +22,12 @@ type Storage interface {
 
 type File struct {
 	Body          io.ReadCloser
-	MimeType      string
+	Extension     string
 	NameGenerator FileNameGenerator
 }
 
 type FileNameGenerator interface {
-	Generate(input io.Reader, mimeType string) (string, error)
+	Generate(input io.Reader, extension string) (string, error)
 }
 
 type FilePathGenerator interface {

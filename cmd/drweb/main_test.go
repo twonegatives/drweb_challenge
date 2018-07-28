@@ -97,7 +97,7 @@ func TestSaveFileHandlerSuccess(t *testing.T) {
 	assert.Equal(t, map[string]string{"Hashstring": filename}, jsonResponse)
 }
 
-func TestRetrieveFileHandlerSuccess(t *testing.T) {
+func TestRetrieveFileHandlerUnknownTypeSuccess(t *testing.T) {
 	filename := "some_saved_file"
 	contents := []byte("Loaded file")
 	file := drweb.File{Body: ioutil.NopCloser(bytes.NewReader(contents))}
@@ -118,6 +118,31 @@ func TestRetrieveFileHandlerSuccess(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, rr.Code)
 	assert.Equal(t, string(contents), rr.Body.String())
+	assert.Equal(t, "application/octet-stream", rr.Header().Get("Content-Type"))
+}
+
+func TestRetrieveFileHandlerWithMimeTypeSuccess(t *testing.T) {
+	filename := "some_saved_file.jpg"
+	contents := []byte("Loaded file")
+	file := drweb.File{Body: ioutil.NopCloser(bytes.NewReader(contents)), Extension: ".jpg"}
+
+	mockCtrl := gomock.NewController(t)
+	storage := mocks.NewMockStorage(mockCtrl)
+	storage.EXPECT().Load(filename).Return(&file, nil)
+
+	req, err := http.NewRequest("GET", "/files/some_saved_file.jpg", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+	router := mux.NewRouter()
+	router.HandleFunc("/files/{hashstring}", main.RetrieveFileHandler(storage))
+	router.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+	assert.Equal(t, string(contents), rr.Body.String())
+	assert.Equal(t, "image/jpeg", rr.Header().Get("Content-Type"))
 }
 
 func TestRetrieveFileHandlerNotFound(t *testing.T) {

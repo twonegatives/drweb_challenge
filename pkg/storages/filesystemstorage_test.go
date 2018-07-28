@@ -14,6 +14,7 @@ import (
 	"github.com/twonegatives/drweb_challenge/pkg/drweb"
 	"github.com/twonegatives/drweb_challenge/pkg/mocks"
 	"github.com/twonegatives/drweb_challenge/pkg/storages"
+	"github.com/twonegatives/drweb_challenge/pkg/testutils"
 )
 
 func TestDeleteUnexistantFile(t *testing.T) {
@@ -81,11 +82,10 @@ func TestLoadBrokenFilepath(t *testing.T) {
 	assert.Contains(t, err.Error(), "failed to generate filepath")
 }
 
-func TestLoadSuccess(t *testing.T) {
-	filename := "load_me1"
+func TestLoaWithExtensionSuccess(t *testing.T) {
+	filename := "load_me1.txt"
 	path := path.Join("../../tmp", filename)
-	err := ioutil.WriteFile(path, []byte("contents"), 0644)
-	if err != nil {
+	if err := testutils.CreateFile(path, []byte("contents"), 0644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -99,11 +99,43 @@ func TestLoadSuccess(t *testing.T) {
 	}
 
 	file, err := storage.Load(filename)
-	assert.Nil(t, err)
-
 	defer file.Body.Close()
-	contents, err := ioutil.ReadAll(file.Body)
 	assert.Nil(t, err)
+	assert.NotNil(t, file.Extension)
+	assert.Equal(t, ".txt", file.Extension)
+
+	contents, err := ioutil.ReadAll(file.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, contents, []byte("contents"))
+}
+
+func TestLoadWithoutExtensionSuccess(t *testing.T) {
+	filename := "load_me1"
+	path := path.Join("../../tmp", filename)
+	if err := testutils.CreateFile(path, []byte("contents"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	defer os.Remove(path)
+
+	mockCtrl := gomock.NewController(t)
+	pathgen := mocks.NewMockFilePathGenerator(mockCtrl)
+	pathgen.EXPECT().Generate(filename).Return(path, nil)
+	storage := storages.FileSystemStorage{
+		FilePathGenerator: pathgen,
+	}
+
+	file, err := storage.Load(filename)
+	defer file.Body.Close()
+	assert.Nil(t, err)
+	assert.Equal(t, "", file.Extension)
+
+	contents, err := ioutil.ReadAll(file.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
 	assert.Equal(t, contents, []byte("contents"))
 }
 
@@ -178,8 +210,6 @@ func TestSaveSuccess(t *testing.T) {
 	filename := "encrypted1"
 	path := path.Join("../../tmp", filename)
 	contents := []byte("File contents")
-	// NOTE: we use this instead of mock version as long as we use TeeReader in storage#Save
-	// this forces us to consume reader in order to fill file with expected contents
 	namegen := &staticFileNameGenerator{Name: filename}
 
 	mockCtrl := gomock.NewController(t)
@@ -193,7 +223,6 @@ func TestSaveSuccess(t *testing.T) {
 
 	file := drweb.File{
 		Body:          ioutil.NopCloser(bytes.NewReader(contents)),
-		MimeType:      "image/png",
 		NameGenerator: namegen,
 	}
 
@@ -214,7 +243,9 @@ type staticFileNameGenerator struct {
 	Name string
 }
 
-func (g *staticFileNameGenerator) Generate(input io.Reader, mimeType string) (string, error) {
+// NOTE: used to read file contents before generation of hashed name first
+// TeeReader in storage#Save forces us to do it in order to write contents to file
+func (g *staticFileNameGenerator) Generate(input io.Reader, extension string) (string, error) {
 	ioutil.ReadAll(input)
 	return g.Name, nil
 }
