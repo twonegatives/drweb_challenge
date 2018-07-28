@@ -1,4 +1,4 @@
-package main_test
+package drweb_test
 
 import (
 	"bytes"
@@ -14,7 +14,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
-	main "github.com/twonegatives/drweb_challenge/cmd/drweb"
 	"github.com/twonegatives/drweb_challenge/pkg/drweb"
 	"github.com/twonegatives/drweb_challenge/pkg/mocks"
 	"github.com/twonegatives/drweb_challenge/pkg/testutils"
@@ -32,7 +31,7 @@ func TestSaveFileHandlerWithoutFileForm(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	router := mux.NewRouter()
-	router.HandleFunc("/files", main.CreateFileHandler(storage, filenamegenerator))
+	router.HandleFunc("/files", drweb.CreateFileHandler(storage, filenamegenerator))
 	router.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusBadRequest, rr.Code)
@@ -58,7 +57,7 @@ func TestSaveFileHandlerWithStorageFail(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	router := mux.NewRouter()
-	router.HandleFunc("/files", main.CreateFileHandler(storage, filenamegenerator))
+	router.HandleFunc("/files", drweb.CreateFileHandler(storage, filenamegenerator))
 	router.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusInternalServerError, rr.Code)
@@ -85,7 +84,7 @@ func TestSaveFileHandlerSuccess(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	router := mux.NewRouter()
-	router.HandleFunc("/files", main.CreateFileHandler(storage, filenamegenerator))
+	router.HandleFunc("/files", drweb.CreateFileHandler(storage, filenamegenerator))
 	router.ServeHTTP(rr, req)
 
 	var jsonResponse map[string]string
@@ -113,7 +112,7 @@ func TestRetrieveFileHandlerUnknownTypeSuccess(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	router := mux.NewRouter()
-	router.HandleFunc("/files/{hashstring}", main.RetrieveFileHandler(storage))
+	router.HandleFunc("/files/{hashstring}", drweb.RetrieveFileHandler(storage))
 	router.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
@@ -137,7 +136,7 @@ func TestRetrieveFileHandlerWithMimeTypeSuccess(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	router := mux.NewRouter()
-	router.HandleFunc("/files/{hashstring}", main.RetrieveFileHandler(storage))
+	router.HandleFunc("/files/{hashstring}", drweb.RetrieveFileHandler(storage))
 	router.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
@@ -158,7 +157,7 @@ func TestRetrieveFileHandlerNotFound(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	router := mux.NewRouter()
-	router.HandleFunc("/files/{hashstring}", main.RetrieveFileHandler(storage))
+	router.HandleFunc("/files/{hashstring}", drweb.RetrieveFileHandler(storage))
 	router.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusNotFound, rr.Code)
@@ -177,7 +176,7 @@ func TestDeleteFileHandlerSuccess(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	router := mux.NewRouter()
-	router.HandleFunc("/files/{hashstring}", main.DeleteFileHandler(storage))
+	router.HandleFunc("/files/{hashstring}", drweb.DeleteFileHandler(storage))
 	router.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
@@ -197,7 +196,7 @@ func TestDeleteFileHandlerNotFound(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	router := mux.NewRouter()
-	router.HandleFunc("/files/{hashstring}", main.DeleteFileHandler(storage))
+	router.HandleFunc("/files/{hashstring}", drweb.DeleteFileHandler(storage))
 	router.ServeHTTP(rr, req)
 
 	assert.Equal(t, http.StatusNotFound, rr.Code)
