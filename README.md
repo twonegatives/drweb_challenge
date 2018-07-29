@@ -1,9 +1,9 @@
 [![CircleCI](https://circleci.com/gh/twonegatives/drweb_challenge.svg?style=svg)](https://circleci.com/gh/twonegatives/drweb_challenge)
 [![codecov](https://codecov.io/gh/twonegatives/drweb_challenge/branch/master/graph/badge.svg)](https://codecov.io/gh/twonegatives/drweb_challenge)
 
-# DrWeb challange
+# DrWeb challenge
 
-Golang code challange was to implement a filestore with http access:
+Golang code challenge was to implement a filestore with http access:
 
 1. User may upload a file to server: file should be saved locally at `/store/ab/abcdef12345`, where `abcdef12345` is a hash of file contents, `ab` is a couple of first hash letters;
 2. It should be possible to call callbacks for pre-processing and post-processing of a file;
