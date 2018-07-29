@@ -114,10 +114,14 @@ Configuration settings might be passed to application via environment variables.
 ## Firing up
 
 ```
-go install github.com/golang/mock/mockgen
 dep ensure
 go install ./...
 $GOPATH/bin/drweb
+```
+
+Local development would also require you to have mockgen for test mocks generation
+```
+go install github.com/golang/mock/mockgen
 ```
 
 ## Tests
