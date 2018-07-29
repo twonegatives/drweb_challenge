@@ -46,6 +46,10 @@ func (s *FileSystemStorage) Save(file *drweb.File) (string, error) {
 		return filename, errors.Wrap(err, "failed to generate filepath")
 	}
 
+	if err = tmpfile.Chmod(s.FileMode); err != nil {
+		return filename, errors.Wrap(err, "failed to set requested file mode")
+	}
+
 	if err = os.MkdirAll(filepath.Dir(path), s.FileMode); err != nil {
 		return filename, errors.Wrap(err, "failed to create nested folders")
 	}

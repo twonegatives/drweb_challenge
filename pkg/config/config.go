@@ -47,6 +47,6 @@ func getDefaults() *configDefaults {
 		PathNestedLevels:        2,
 		PathNestedFoldersLength: 2,
 		PathBase:                ".",
-		StorageFileMode:         0700,
+		StorageFileMode:         0755,
 	}
 }

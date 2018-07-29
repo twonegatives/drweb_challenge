@@ -109,14 +109,14 @@ Configuration settings might be passed to application via environment variables.
 * `PATH_NESTED_LEVELS` - How many levels of nesting should be used when storing a file. Default: `2`
 * `PATH_NESTED_FOLDERS_LENGTH` - How many characters should each folder's name consist of. Default: `2`
 * `PATH_BASE` - Where to store files and corresponding folders. Default: `.`
-* `STORAGE_FILE_MODE` - What filemode to use when creating files and folders. Default: `0700`
+* `STORAGE_FILE_MODE` - What filemode to use when creating files and folders. Default: `0755`
 
 ## Firing up
 
 ```
 dep ensure
 go install ./...
-$GOPATH/bin/drweb
+LISTEN=:3001 $GOPATH/bin/drweb
 ```
 
 Local development would also require you to have mockgen for test mocks generation
