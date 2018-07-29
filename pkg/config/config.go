@@ -13,7 +13,7 @@ var once sync.Once
 func GetConfig() *viper.Viper {
 	once.Do(func() {
 		defaults := getDefaults()
-		cfg := viper.New()
+		cfg = viper.New()
 		cfg.SetDefault("LISTEN", defaults.Listen)
 		cfg.SetDefault("WRITE_TIMEOUT", defaults.WriteTimeout)
 		cfg.SetDefault("READ_TIMEOUT", defaults.ReadTimeout)
