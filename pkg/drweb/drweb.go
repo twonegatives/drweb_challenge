@@ -26,6 +26,10 @@ type File struct {
 	NameGenerator FileNameGenerator
 }
 
+func (f *File) Close() error {
+	return f.Body.Close()
+}
+
 type FileNameGenerator interface {
 	Generate(input io.Reader, extension string) (string, error)
 }

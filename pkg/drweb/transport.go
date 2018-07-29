@@ -35,6 +35,7 @@ func CreateFileHandler(storage Storage, filenamegenerator FileNameGenerator) fun
 			writeJSONError(&w, err)
 			return
 		}
+		defer formFile.Close()
 
 		file = &File{
 			Body:          formFile,
@@ -74,6 +75,8 @@ func RetrieveFileHandler(storage Storage) func(http.ResponseWriter, *http.Reques
 			writeJSONError(&w, err)
 			return
 		}
+
+		defer file.Close()
 
 		mimetype := "application/octet-stream"
 		if file.Extension != "" {

@@ -28,12 +28,18 @@ func (s *FileSystemStorage) Save(file *drweb.File) (string, error) {
 		return filename, errors.New("failed to save file without name generator")
 	}
 
+	// NOTE: we use temp file here as it solves filename uniqueness for us
+	// although it requires us to chmod and rename it later
 	tmpfile, err := ioutil.TempFile(os.TempDir(), "prefix")
 	if err != nil {
 		return filename, errors.Wrap(err, "failed to create file")
 	}
 
 	defer tmpfile.Close()
+
+	if err = tmpfile.Chmod(s.FileMode); err != nil {
+		return filename, errors.Wrap(err, "failed to set requested file mode")
+	}
 
 	filenameReader := io.TeeReader(file.Body, tmpfile)
 	filename, err = file.NameGenerator.Generate(filenameReader, file.Extension)
@@ -44,10 +50,6 @@ func (s *FileSystemStorage) Save(file *drweb.File) (string, error) {
 
 	if path, err = s.filepath(filename); err != nil {
 		return filename, errors.Wrap(err, "failed to generate filepath")
-	}
-
-	if err = tmpfile.Chmod(s.FileMode); err != nil {
-		return filename, errors.Wrap(err, "failed to set requested file mode")
 	}
 
 	if err = os.MkdirAll(filepath.Dir(path), s.FileMode); err != nil {
