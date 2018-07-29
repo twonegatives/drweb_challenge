@@ -22,6 +22,7 @@ func TestDeleteUnexistantFile(t *testing.T) {
 	path := path.Join("../../tmp", filename)
 
 	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
 	pathgen := mocks.NewMockFilePathGenerator(mockCtrl)
 	pathgen.EXPECT().Generate(filename).Return(path, nil)
 	storage := storages.FileSystemStorage{
@@ -35,6 +36,7 @@ func TestDeleteUnexistantFile(t *testing.T) {
 
 func TestDeleteBrokenFilepath(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
 	pathgen := mocks.NewMockFilePathGenerator(mockCtrl)
 	pathgen.EXPECT().Generate("filename").Return("", errors.New("generation error"))
 	storage := storages.FileSystemStorage{
@@ -55,6 +57,7 @@ func TestDeleteSuccess(t *testing.T) {
 	}
 
 	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
 	pathgen := mocks.NewMockFilePathGenerator(mockCtrl)
 	pathgen.EXPECT().Generate(filename).Return(path, nil)
 	storage := storages.FileSystemStorage{
@@ -71,6 +74,7 @@ func TestDeleteSuccess(t *testing.T) {
 
 func TestLoadBrokenFilepath(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
 	pathgen := mocks.NewMockFilePathGenerator(mockCtrl)
 	pathgen.EXPECT().Generate("filename").Return("", errors.New("generation error"))
 	storage := storages.FileSystemStorage{
@@ -92,6 +96,7 @@ func TestLoaWithExtensionSuccess(t *testing.T) {
 	defer os.Remove(path)
 
 	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
 	pathgen := mocks.NewMockFilePathGenerator(mockCtrl)
 	pathgen.EXPECT().Generate(filename).Return(path, nil)
 	storage := storages.FileSystemStorage{
@@ -121,6 +126,7 @@ func TestLoadWithoutExtensionSuccess(t *testing.T) {
 	defer os.Remove(path)
 
 	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
 	pathgen := mocks.NewMockFilePathGenerator(mockCtrl)
 	pathgen.EXPECT().Generate(filename).Return(path, nil)
 	storage := storages.FileSystemStorage{
@@ -144,6 +150,7 @@ func TestLoadUnexistantFile(t *testing.T) {
 	path := path.Join("../../tmp", filename)
 
 	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
 	pathgen := mocks.NewMockFilePathGenerator(mockCtrl)
 	pathgen.EXPECT().Generate(filename).Return(path, nil)
 	storage := storages.FileSystemStorage{
@@ -157,9 +164,10 @@ func TestLoadUnexistantFile(t *testing.T) {
 
 func TestSaveBlankNameGenerator(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
 
 	pathgen := mocks.NewMockFilePathGenerator(mockCtrl)
-	pathgen.EXPECT().Generate(gomock.Any()).Return("some/path", nil)
+	pathgen.EXPECT().Generate(gomock.Any()).Times(0)
 
 	storage := storages.FileSystemStorage{
 		FilePathGenerator: pathgen,
@@ -172,12 +180,13 @@ func TestSaveBlankNameGenerator(t *testing.T) {
 
 func TestSaveBrokenFilename(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
 
 	namegen := mocks.NewMockFileNameGenerator(mockCtrl)
 	namegen.EXPECT().Generate(gomock.Any(), gomock.Any()).Return("", errors.New("name generation error"))
 
 	pathgen := mocks.NewMockFilePathGenerator(mockCtrl)
-	pathgen.EXPECT().Generate(gomock.Any()).Return("some/path", nil)
+	pathgen.EXPECT().Generate(gomock.Any()).Times(0)
 
 	storage := storages.FileSystemStorage{
 		FilePathGenerator: pathgen,
@@ -190,6 +199,7 @@ func TestSaveBrokenFilename(t *testing.T) {
 
 func TestSaveBrokenFilepath(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
 
 	namegen := mocks.NewMockFileNameGenerator(mockCtrl)
 	namegen.EXPECT().Generate(gomock.Any(), gomock.Any()).Return("encrypted", nil)
@@ -213,6 +223,7 @@ func TestSaveSuccess(t *testing.T) {
 	namegen := &staticFileNameGenerator{Name: filename}
 
 	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
 	pathgen := mocks.NewMockFilePathGenerator(mockCtrl)
 	pathgen.EXPECT().Generate(filename).Return(path, nil)
 
