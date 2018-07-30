@@ -1,13 +1,13 @@
 package drweb
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
-	"mime"
 	"mime/multipart"
 	"net/http"
 	"os"
-	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
 
@@ -22,14 +22,13 @@ func writeJSONError(writer *http.ResponseWriter, err error) {
 func CreateFileHandler(storage Storage, filenamegenerator FileNameGenerator) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var formFile multipart.File
-		var formFileHeader *multipart.FileHeader
-		var file *File
+		var file *FileCreateRequest
 		var filename string
 		var err error
 
 		w.Header().Set("Content-Type", "application/json")
 
-		if formFile, formFileHeader, err = r.FormFile("file"); err != nil {
+		if formFile, _, err = r.FormFile("file"); err != nil {
 			log.WithError(err).Error("failed to get a form file")
 			w.WriteHeader(http.StatusBadRequest)
 			writeJSONError(&w, err)
@@ -37,10 +36,9 @@ func CreateFileHandler(storage Storage, filenamegenerator FileNameGenerator) fun
 		}
 		defer formFile.Close()
 
-		file = &File{
+		file = &FileCreateRequest{
 			Body:          formFile,
 			NameGenerator: filenamegenerator,
-			Extension:     filepath.Ext(formFileHeader.Filename),
 		}
 
 		if filename, err = storage.Save(file); err != nil {
@@ -57,15 +55,15 @@ func CreateFileHandler(storage Storage, filenamegenerator FileNameGenerator) fun
 
 func RetrieveFileHandler(storage Storage) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
-		var file *File
 		var err error
+		var file *File
+		var leadingCnt int
 
 		vars := mux.Vars(req)
 		filename := vars["hashstring"]
 
-		w.Header().Set("Content-Type", "application/json")
-
 		if file, err = storage.Load(filename); err != nil {
+			w.Header().Set("Content-Type", "application/json")
 			if os.IsNotExist(errors.Cause(err)) {
 				w.WriteHeader(http.StatusNotFound)
 			} else {
@@ -78,21 +76,30 @@ func RetrieveFileHandler(storage Storage) func(http.ResponseWriter, *http.Reques
 
 		defer file.Close()
 
-		mimetype := "application/octet-stream"
-		if file.Extension != "" {
-			if inferred := mime.TypeByExtension(file.Extension); inferred != "" {
-				mimetype = inferred
+		max := func(x, y int64) int64 {
+			if x < y {
+				return x
 			}
+			return y
 		}
 
-		if _, err = io.Copy(w, file.Body); err != nil {
-			log.WithError(err).Error("failed to stream file to client")
-			w.WriteHeader(http.StatusInternalServerError)
+		buffer := make([]byte, max(file.Size, 512))
+		if leadingCnt, err = file.Body.Read(buffer); err != nil {
+			w.Header().Set("Content-Type", "application/json")
 			writeJSONError(&w, err)
-			return
 		}
 
-		w.Header().Set("Content-Type", mimetype)
+		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
+		w.Header().Set("Content-Type", http.DetectContentType(buffer))
+		w.Header().Set("Content-Length", fmt.Sprintf("%d", file.Size))
+		_, err = io.Copy(w, io.MultiReader(bytes.NewReader(buffer[0:leadingCnt]), file.Body))
+
+		if err != nil {
+			// NOTE: streaming does not leave us much to do in case of failure
+			// but to close the connection and assume client will check
+			// hashsum or content-length by himself. in any case we can log this
+			log.WithError(err).Error("file streaming over http failed")
+		}
 	}
 }
 

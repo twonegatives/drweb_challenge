@@ -39,53 +39,40 @@ func TestLoadFailure(t *testing.T) {
 }
 
 type loadSuccessCase struct {
-	Filename          string
-	Filemode          os.FileMode
-	Contents          []byte
-	ExpectedExtension string
+	Filename string
+	Path     string
+	Size     int64
 }
 
 func TestLoadSuccess(t *testing.T) {
 	objects := map[string]loadSuccessCase{
-		"with extension": {
-			Filename:          "load_me1.txt",
-			Filemode:          0644,
-			ExpectedExtension: ".txt",
-			Contents:          []byte("some contents"),
+		"text file": {
+			Filename: "alice",
+			Path:     "../testdata/alice.txt",
+			Size:     4094,
 		},
-		"without extension": {
-			Filename:          "load_me1",
-			Filemode:          0644,
-			ExpectedExtension: "",
-			Contents:          []byte("contents without ext"),
+		"image file": {
+			Filename: "gopher",
+			Path:     "../testdata/gopher.jpg",
+			Size:     6707,
 		},
 	}
 
 	for testName, testObject := range objects {
 		t.Run(testName, func(t *testing.T) {
-			path := path.Join("../../tmp", testObject.Filename)
-			if err := testutils.CreateFile(path, testObject.Contents, testObject.Filemode); err != nil {
-				t.Fatal(err)
-			}
-
-			defer os.Remove(path)
-
 			mockCtrl := gomock.NewController(t)
 			defer mockCtrl.Finish()
 
-			storage := testutils.GenerateStorage(testObject.Filename, path, nil, mockCtrl)
+			storage := testutils.GenerateStorage(testObject.Filename, testObject.Path, nil, mockCtrl)
 
 			file, err := storage.Load(testObject.Filename)
-			defer file.Body.Close()
 			assert.Nil(t, err)
-			assert.NotNil(t, file.Extension)
-			assert.Equal(t, testObject.ExpectedExtension, file.Extension)
+			assert.Equal(t, testObject.Size, file.Size)
 
-			contents, err := ioutil.ReadAll(file.Body)
+			_, err = ioutil.ReadAll(file.Body)
 			if err != nil {
 				t.Fatal(err)
 			}
-			assert.Equal(t, testObject.Contents, contents)
 		})
 	}
 }

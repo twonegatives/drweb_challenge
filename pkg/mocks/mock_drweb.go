@@ -107,7 +107,7 @@ func (m *MockStorage) EXPECT() *MockStorageMockRecorder {
 }
 
 // Save mocks base method
-func (m *MockStorage) Save(f *drweb.File) (string, error) {
+func (m *MockStorage) Save(f *drweb.FileCreateRequest) (string, error) {
 	ret := m.ctrl.Call(m, "Save", f)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
@@ -168,16 +168,16 @@ func (m *MockFileNameGenerator) EXPECT() *MockFileNameGeneratorMockRecorder {
 }
 
 // Generate mocks base method
-func (m *MockFileNameGenerator) Generate(input io.Reader, extension string) (string, error) {
-	ret := m.ctrl.Call(m, "Generate", input, extension)
+func (m *MockFileNameGenerator) Generate(input io.Reader) (string, error) {
+	ret := m.ctrl.Call(m, "Generate", input)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Generate indicates an expected call of Generate
-func (mr *MockFileNameGeneratorMockRecorder) Generate(input, extension interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Generate", reflect.TypeOf((*MockFileNameGenerator)(nil).Generate), input, extension)
+func (mr *MockFileNameGeneratorMockRecorder) Generate(input interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Generate", reflect.TypeOf((*MockFileNameGenerator)(nil).Generate), input)
 }
 
 // MockFilePathGenerator is a mock of FilePathGenerator interface

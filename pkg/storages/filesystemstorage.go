@@ -19,7 +19,7 @@ func (s *FileSystemStorage) filepath(filename string) (string, error) {
 	return s.FilePathGenerator.Generate(filename)
 }
 
-func (s *FileSystemStorage) Save(file *drweb.File) (string, error) {
+func (s *FileSystemStorage) Save(file *drweb.FileCreateRequest) (string, error) {
 	var filename string
 	var path string
 	var err error
@@ -28,8 +28,8 @@ func (s *FileSystemStorage) Save(file *drweb.File) (string, error) {
 		return filename, errors.New("failed to save file without name generator")
 	}
 
-	// NOTE: we use temp file here as it solves filename uniqueness for us
-	// although it requires us to chmod and rename it later
+	// NOTE: temp file solves filename uniqueness issue for us
+	// until we get a final hashsum name. we should chmod/rename it thougth
 	tmpfile, err := ioutil.TempFile(os.TempDir(), "prefix")
 	if err != nil {
 		return filename, errors.Wrap(err, "failed to create file")
@@ -42,7 +42,7 @@ func (s *FileSystemStorage) Save(file *drweb.File) (string, error) {
 	}
 
 	filenameReader := io.TeeReader(file.Body, tmpfile)
-	filename, err = file.NameGenerator.Generate(filenameReader, file.Extension)
+	filename, err = file.NameGenerator.Generate(filenameReader)
 
 	if err != nil {
 		return filename, errors.Wrap(err, "failed to generate filename")
@@ -62,8 +62,8 @@ func (s *FileSystemStorage) Save(file *drweb.File) (string, error) {
 }
 
 func (s *FileSystemStorage) Load(filename string) (*drweb.File, error) {
-	var file *drweb.File
-	var reader io.ReadCloser
+	var file *os.File
+	var stat os.FileInfo
 	var path string
 	var err error
 
@@ -71,16 +71,15 @@ func (s *FileSystemStorage) Load(filename string) (*drweb.File, error) {
 		return nil, errors.Wrap(err, "failed to generate filepath")
 	}
 
-	if reader, err = os.Open(path); err != nil {
+	if stat, err = os.Stat(path); err != nil {
+		return nil, errors.Wrap(err, "failed to get file info")
+	}
+
+	if file, err = os.Open(path); err != nil {
 		return nil, errors.Wrap(err, "failed to open file")
 	}
 
-	file = &drweb.File{
-		Body:      reader,
-		Extension: filepath.Ext(filename),
-	}
-
-	return file, nil
+	return &drweb.File{Body: file, Size: stat.Size()}, nil
 }
 
 func (s *FileSystemStorage) Delete(filename string) error {

@@ -15,15 +15,23 @@ type Callback interface {
 }
 
 type Storage interface {
-	Save(f *File) (string, error)
+	Save(f *FileCreateRequest) (string, error)
 	Load(filename string) (*File, error)
 	Delete(filename string) error
 }
 
-type File struct {
+type FileCreateRequest struct {
 	Body          io.ReadCloser
-	Extension     string
 	NameGenerator FileNameGenerator
+}
+
+func (f *FileCreateRequest) Close() error {
+	return f.Body.Close()
+}
+
+type File struct {
+	Body io.ReadCloser
+	Size int64
 }
 
 func (f *File) Close() error {
@@ -31,7 +39,7 @@ func (f *File) Close() error {
 }
 
 type FileNameGenerator interface {
-	Generate(input io.Reader, extension string) (string, error)
+	Generate(input io.Reader) (string, error)
 }
 
 type FilePathGenerator interface {

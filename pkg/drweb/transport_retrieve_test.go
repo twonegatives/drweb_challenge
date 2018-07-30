@@ -19,15 +19,14 @@ import (
 )
 
 type retrieveSuccessCase struct {
-	Filename    string
-	Extension   string
-	Contents    []byte
-	ContentType string
+	Filename      string
+	Contents      []byte
+	ContentType   string
+	ContentLength int
 }
 
 type retrieveFailureCase struct {
 	Filename     string
-	Extension    string
 	Contents     []byte
 	ContentType  string
 	StorageError error
@@ -36,24 +35,34 @@ type retrieveFailureCase struct {
 }
 
 func TestRetrieveSuccess(t *testing.T) {
+	txtFile, err := ioutil.ReadFile("./../testdata/alice.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	jpgFile, err := ioutil.ReadFile("./../testdata/gopher.jpg")
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	var objects = map[string]retrieveSuccessCase{
-		"unknown file type": {
-			Filename:    "some_saved_file",
-			Extension:   "",
-			Contents:    []byte("Loaded file"),
-			ContentType: "application/octet-stream",
+		"text file": {
+			Filename:      "text_saved_file",
+			Contents:      txtFile,
+			ContentType:   "text/plain; charset=utf-8",
+			ContentLength: 4094,
 		},
-		"known file type": {
-			Filename:    "another_saved_file",
-			Extension:   ".jpg",
-			Contents:    []byte("Loaded file"),
-			ContentType: "image/jpeg",
+		"image file": {
+			Filename:      "image_saved_file",
+			Contents:      jpgFile,
+			ContentType:   "image/jpeg",
+			ContentLength: 6707,
 		},
 	}
 
 	for testName, testObject := range objects {
 		t.Run(testName, func(t *testing.T) {
-			file := drweb.File{Body: ioutil.NopCloser(bytes.NewReader(testObject.Contents)), Extension: testObject.Extension}
+			file := drweb.File{Body: ioutil.NopCloser(bytes.NewReader(testObject.Contents)), Size: int64(len(testObject.Contents))}
 
 			mockCtrl := gomock.NewController(t)
 			defer mockCtrl.Finish()
@@ -73,20 +82,22 @@ func TestRetrieveSuccess(t *testing.T) {
 			assert.Equal(t, http.StatusOK, rr.Code)
 			assert.Equal(t, string(testObject.Contents), rr.Body.String())
 			assert.Equal(t, testObject.ContentType, rr.Header().Get("Content-Type"))
+			assert.Equal(t, fmt.Sprintf("%d", testObject.ContentLength), rr.Header().Get("Content-Length"))
+			assert.Equal(t, fmt.Sprintf("attachment; filename=%s", testObject.Filename), rr.Header().Get("Content-Disposition"))
 		})
 	}
 }
 
 func TestRetrieveFailure(t *testing.T) {
 	var objects = map[string]retrieveFailureCase{
-		"unknown file type": {
+		"file does not exist": {
 			Filename:     "unexistant_file",
 			ContentType:  "application/json",
 			ServerCode:   http.StatusNotFound,
 			StorageError: errors.Wrap(os.ErrNotExist, "some description"),
 			ServerError:  "",
 		},
-		"known file type": {
+		"file read from storage failed": {
 			Filename:     "unlucky_file",
 			ContentType:  "application/json",
 			ServerCode:   http.StatusInternalServerError,

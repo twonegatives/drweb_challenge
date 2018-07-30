@@ -22,7 +22,7 @@ type staticFileNameGenerator struct {
 
 // NOTE: used to read file contents before generation of hashed name first
 // TeeReader in storage#Save forces us to do it in order to write contents to file
-func (g *staticFileNameGenerator) Generate(input io.Reader, extension string) (string, error) {
+func (g *staticFileNameGenerator) Generate(input io.Reader) (string, error) {
 	ioutil.ReadAll(input)
 	return g.Name, nil
 }
@@ -39,7 +39,7 @@ func TestSaveFailure(t *testing.T) {
 			FilePathGenerator: pathgen,
 		}
 
-		_, err := storage.Save(&drweb.File{})
+		_, err := storage.Save(&drweb.FileCreateRequest{})
 		assert.NotNil(t, err)
 		assert.Contains(t, err.Error(), "failed to save file without name generator")
 	})
@@ -49,7 +49,7 @@ func TestSaveFailure(t *testing.T) {
 		defer mockCtrl.Finish()
 
 		namegen := mocks.NewMockFileNameGenerator(mockCtrl)
-		namegen.EXPECT().Generate(gomock.Any(), gomock.Any()).Return("", errors.New("name generation error"))
+		namegen.EXPECT().Generate(gomock.Any()).Return("", errors.New("name generation error"))
 
 		pathgen := mocks.NewMockFilePathGenerator(mockCtrl)
 		pathgen.EXPECT().Generate(gomock.Any()).Times(0)
@@ -58,7 +58,7 @@ func TestSaveFailure(t *testing.T) {
 			FilePathGenerator: pathgen,
 		}
 
-		_, err := storage.Save(&drweb.File{NameGenerator: namegen})
+		_, err := storage.Save(&drweb.FileCreateRequest{NameGenerator: namegen})
 		assert.NotNil(t, err)
 		assert.Contains(t, err.Error(), "failed to generate filename")
 	})
@@ -68,7 +68,7 @@ func TestSaveFailure(t *testing.T) {
 		defer mockCtrl.Finish()
 
 		namegen := mocks.NewMockFileNameGenerator(mockCtrl)
-		namegen.EXPECT().Generate(gomock.Any(), gomock.Any()).Return("encrypted", nil)
+		namegen.EXPECT().Generate(gomock.Any()).Return("encrypted", nil)
 
 		pathgen := mocks.NewMockFilePathGenerator(mockCtrl)
 		pathgen.EXPECT().Generate("encrypted").Return("", errors.New("path generation error"))
@@ -77,7 +77,7 @@ func TestSaveFailure(t *testing.T) {
 			FilePathGenerator: pathgen,
 		}
 
-		_, err := storage.Save(&drweb.File{NameGenerator: namegen})
+		_, err := storage.Save(&drweb.FileCreateRequest{NameGenerator: namegen})
 		assert.NotNil(t, err)
 		assert.Contains(t, err.Error(), "failed to generate filepath")
 	})
@@ -99,7 +99,7 @@ func TestSaveSuccess(t *testing.T) {
 		FilePathGenerator: pathgen,
 	}
 
-	file := drweb.File{
+	file := drweb.FileCreateRequest{
 		Body:          ioutil.NopCloser(bytes.NewReader(contents)),
 		NameGenerator: namegen,
 	}
