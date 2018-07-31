@@ -16,7 +16,7 @@ func CreateFile(path string, contents []byte, fileMode os.FileMode) error {
 	return ioutil.WriteFile(path, contents, fileMode)
 }
 
-func FileToMultipartForm(filename string, contents []byte, paramName string) (*bytes.Buffer, string, error) {
+func FileToFormData(filename string, contents []byte, paramName string) (*bytes.Buffer, string, error) {
 	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
 	part, err := writer.CreateFormFile(paramName, filename)

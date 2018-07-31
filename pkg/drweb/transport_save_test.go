@@ -48,7 +48,7 @@ func TestSaveFailure(t *testing.T) {
 		storage.EXPECT().Save(gomock.Any()).Return("", errors.New("storage is corrupted"))
 		filenamegenerator := mocks.NewMockFileNameGenerator(mockCtrl)
 
-		multipartBody, multipartBoundary, err := testutils.FileToMultipartForm("original_filename", []byte("Byte file contents"), "file")
+		multipartBody, multipartBoundary, err := testutils.FileToFormData("original_filename", []byte("Byte file contents"), "file")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -82,7 +82,7 @@ func TestSaveFileHandlerSuccess(t *testing.T) {
 	storage.EXPECT().Save(gomock.Any()).Return(filename, nil)
 	filenamegenerator := mocks.NewMockFileNameGenerator(mockCtrl)
 
-	multipartBody, multipartBoundary, err := testutils.FileToMultipartForm("original_filename", []byte("Byte file contents"), "file")
+	multipartBody, multipartBoundary, err := testutils.FileToFormData("original_filename", []byte("Byte file contents"), "file")
 	if err != nil {
 		t.Fatal(err)
 	}

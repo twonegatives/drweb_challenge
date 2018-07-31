@@ -6,10 +6,6 @@ import (
 
 //go:generate mockgen -source=drweb.go -destination ../mocks/mock_drweb.go -package mocks
 
-type Encoder interface {
-	Encode(input []byte) []byte
-}
-
 type Callback interface {
 	Invoke(args ...interface{})
 }

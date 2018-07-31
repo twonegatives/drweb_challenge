@@ -15,8 +15,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-func writeJSONError(writer *http.ResponseWriter, err error) {
-	json.NewEncoder(*writer).Encode(map[string]string{"error": err.Error()})
+func writeJSONError(writer http.ResponseWriter, err error, status int) {
+	writer.WriteHeader(status)
+	jsonErr := json.NewEncoder(writer).Encode(map[string]string{"error": err.Error()})
+	if jsonErr != nil {
+		log.WithError(err).Error("failed to write JSON encoding to the stream")
+	}
 }
 
 func CreateFileHandler(storage Storage, filenamegenerator FileNameGenerator) func(http.ResponseWriter, *http.Request) {
@@ -30,8 +34,7 @@ func CreateFileHandler(storage Storage, filenamegenerator FileNameGenerator) fun
 
 		if formFile, _, err = r.FormFile("file"); err != nil {
 			log.WithError(err).Error("failed to get a form file")
-			w.WriteHeader(http.StatusBadRequest)
-			writeJSONError(&w, err)
+			writeJSONError(w, err, http.StatusBadRequest)
 			return
 		}
 		defer formFile.Close()
@@ -43,13 +46,15 @@ func CreateFileHandler(storage Storage, filenamegenerator FileNameGenerator) fun
 
 		if filename, err = storage.Save(file); err != nil {
 			log.WithError(err).Error("failed to save file")
-			w.WriteHeader(http.StatusInternalServerError)
-			writeJSONError(&w, err)
+			writeJSONError(w, err, http.StatusInternalServerError)
 			return
 		}
 
 		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(map[string]string{"hashstring": filename})
+		err = json.NewEncoder(w).Encode(map[string]string{"hashstring": filename})
+		if err != nil {
+			log.WithError(err).Error("failed to write JSON encoding to the stream")
+		}
 	}
 }
 
@@ -65,12 +70,12 @@ func RetrieveFileHandler(storage Storage) func(http.ResponseWriter, *http.Reques
 		if file, err = storage.Load(filename); err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			if os.IsNotExist(errors.Cause(err)) {
-				w.WriteHeader(http.StatusNotFound)
-			} else {
-				log.WithError(err).Error("failed to load file from storage")
-				w.WriteHeader(http.StatusInternalServerError)
+				writeJSONError(w, err, http.StatusNotFound)
+				return
 			}
-			writeJSONError(&w, err)
+
+			log.WithError(err).Error("failed to load file from storage")
+			writeJSONError(w, err, http.StatusInternalServerError)
 			return
 		}
 
@@ -86,7 +91,7 @@ func RetrieveFileHandler(storage Storage) func(http.ResponseWriter, *http.Reques
 		buffer := make([]byte, max(file.Size, 512))
 		if leadingCnt, err = file.Body.Read(buffer); err != nil {
 			w.Header().Set("Content-Type", "application/json")
-			writeJSONError(&w, err)
+			writeJSONError(w, err, http.StatusInternalServerError)
 		}
 
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
@@ -114,8 +119,7 @@ func DeleteFileHandler(storage Storage) func(http.ResponseWriter, *http.Request)
 			}
 
 			log.WithError(err).Error("failed to delete file from storage")
-			w.WriteHeader(http.StatusInternalServerError)
-			writeJSONError(&w, err)
+			writeJSONError(w, err, http.StatusInternalServerError)
 			return
 		}
 	}
