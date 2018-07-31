@@ -81,14 +81,14 @@ func RetrieveFileHandler(storage Storage) func(http.ResponseWriter, *http.Reques
 
 		defer file.Close()
 
-		max := func(x, y int64) int64 {
+		min := func(x, y int64) int64 {
 			if x < y {
 				return x
 			}
 			return y
 		}
 
-		buffer := make([]byte, max(file.Size, 512))
+		buffer := make([]byte, min(file.Size, 512))
 		if leadingCnt, err = file.Body.Read(buffer); err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			writeJSONError(w, err, http.StatusInternalServerError)
